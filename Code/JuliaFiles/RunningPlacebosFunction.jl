@@ -1,0 +1,60 @@
+##This function runs the synthetic control function and creates 
+
+using CSV 
+using DataFrames
+
+include("GenSynthetics_NLopt.jl")
+
+function RunningPlacebos(matchon, W, bounds, predict, Pool::DataFrame)
+
+    N = size(Pool)[1]
+    i = collect(1:1:N)
+    Pool[:i] = .5*2*i
+
+    ###Before Running want to ensure Pooled group has no missings for necessary values
+    bigp = size(Pool)[1]
+    Pool[:ID] = collect(1:1:bigp)
+    completecheck = [:ID; matchon; predict]
+    tempPool = Pool[:, completecheck]
+    tempPool = tempPool[completecases(tempPool),:]
+    PoolCompleteID = DataFrame(ID = tempPool[:ID])
+    Pool = join(Pool, PoolCompleteID, on=:ID, kind=:inner)
+    relevant = [:Country; :year; matchon; predict]
+    SynthRelevant = Pool[:, relevant]
+
+    ##Now making two empty DataFrames to populate with results as I go
+    SyntheticPlacebos = SynthRelevant[1:1, :]
+    SyntheticPlacebos[:SqError] = [2.]
+    SyntheticPlacebos = deleterows!(SyntheticPlacebos,1)
+    TreatPlaceb = SyntheticPlacebos[SyntheticPlacebos[:LGrowth5].<Inf,:]  #arbitrary to just copy it
+    TreatPlaceb[:ID] = []
+    global SyntheticPlacebos
+    global TreatPlaceb
+
+    #Loops over and runs the Synthetic Controls for each placebo against all others given specification
+    for j = 1:size(Pool)[1]
+        println("Another One!")
+        placebo = Pool[Pool[:i].==j, relevant] 
+        if size(placebo)[1]>0
+            dropplaceb = Pool[Pool[:i].!=j, relevant]
+            (Placebt, Placebj, w) = GenSynthetics(placebo, dropplaceb, matchon, predict, localtol= bounds, matchweights=W)
+            Placebt[:SqError]=0.
+            SyntheticPlacebos=[SyntheticPlacebos; Placebj]
+            TreatPlaceb = [TreatPlaceb; Placebt]
+        end
+    end
+
+    for z = (SyntheticPlacebos, TreatPlaceb)
+        z[:PostGrowth1] = map((x1) -> 100*(1+x1/100 -1), z[:FGrowth1])
+        z[:PostGrowth2] = map((x1,x2) -> 100*((1+x1/100)*(1+x2/100) -1), z[:FGrowth1], z[:FGrowth2])
+        z[:PostGrowth3] = map((x1,x2,x3) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100) -1), z[:FGrowth1], z[:FGrowth2], z[:FGrowth3])
+        z[:PostGrowth4] = map((x1,x2,x3,x4) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100)*(1+x4/100) -1), z[:FGrowth1], z[:FGrowth2], z[:FGrowth3], z[:FGrowth4])
+        z[:PostGrowth5] = map((x1,x2,x3,x4,x5) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100)*(1+x4/100)*(1+x5/100) -1), z[:FGrowth1], z[:FGrowth2], z[:FGrowth3], z[:FGrowth4], z[:FGrowth5])
+        z[:PostGrowth6] = map((x1,x2,x3,x4,x5, x6) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100)*(1+x4/100)*(1+x5/100)*(1+x6/100) -1), z[:FGrowth1], z[:FGrowth2], z[:FGrowth3], z[:FGrowth4], z[:FGrowth5], z[:FGrowth6])
+    end
+return TreatPlaceb, SyntheticPlacebos
+end
+
+println("This function takes: matching variables, weights on these matches, outcomes to predict, and Pool DataFrame as arguments and returns two DataFrames: placebos that have matches and then their synthetic controls.")
+
+

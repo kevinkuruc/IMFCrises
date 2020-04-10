@@ -6,20 +6,26 @@
 # the folder.                                               #
 #############################################################
 
-CurrentPath = "C:\\Users\\kevin\\OneDrive\\IMF\\"
+directory = dirname(dirname(pwd()))
+code_directory = joinpath(directory, "Code", "JuliaFiles")
+data_directory = joinpath(directory, "Data")
+output_directory = joinpath(directory, "Results")
+mkpath(output_directory)
 
 using Plots
 using Statistics
 using ColorTypes
 using DataFrames
 using CSV
-using ColorTypes
 using Ipopt
 using NLopt
 using LinearAlgebra
-using StatPlots
+using StatsPlots
 using Distributions
-include(string(CurrentPath,"Code\\JuliaFiles\\LinearRegression.jl"))
+include(joinpath(code_directory, "LinearRegression.jl"))
+include(joinpath(code_directory, "RunningPlacebosFunction.jl"))
+include(joinpath(code_directory, "Crisis_Heterogeneity.jl"))
+
 
 #############################################################
 # Things to define for entire paper                         #
@@ -35,7 +41,7 @@ controlred = RGB(120/255, 120/255, 120/255)
 #############################################################
 
 ## LOAD IN ALL IMF LOAN GROWTH RATES CENTERED AROUND THEIR LOAN
-LoanPath = CSV.read(string(CurrentPath, "Data\\created\\AvgPathLoans.csv"))
+LoanPath = CSV.read(joinpath(data_directory, "created", "AvgPathLoans.csv"))
 tempk = [:AmountAgreedPercentGDP, :year]
 LoanSizes  = LoanPath[:, tempk]
 LoanSizes  = LoanSizes[completecases(LoanSizes),:]
@@ -67,13 +73,13 @@ xticks!(t)
 xlabel!("Years Since Loan")
 ylabel!("GDP Growth (%)")
 annotate!([(0, 3.8, text("IMF Loan", 9, :black, :left))])
-savefig(string(CurrentPath, "Figures\\SummaryPath.pdf"))
+savefig(joinpath(output_directory, "SummaryPath.pdf"))
 
 #########################################################################################
 #  Make Graph with Financial Crisis & Split to With/Without                             #
 #########################################################################################
 
-AllData					= CSV.read(string(CurrentPath, "Data\\created\\MasterData.csv"))
+AllData					= CSV.read(joinpath(data_directory, "created", "MasterData.csv"))
 NAllCrises 				= size(AllData)[1]
 println("Number of total crises for path is $NAllCrises")
 		for z in (:Banking, :Currency, :Debt)
@@ -107,15 +113,14 @@ xticks!(t)
 xlabel!("Years Since Crisis")
 ylabel!("GDP Growth (%)")
 annotate!([(0, 3.4, text("Crisis Date", 9, :black, :left))])
-savefig(string(CurrentPath, "Figures\\AvgPathCrises_AllCrises.pdf"))
+savefig(joinpath(output_directory, "AvgPathCrises_AllCrises.pdf"))
 
 plot(t[1:11], CrisisPaths[1:11,2:3], legend=:bottomright, label=["W/ IMF" "W/o IMF"], color=[treatedblue controlred], style=[:solid :dashdot], linewidth=[2 2], ylim=(0, 4.4))
 vline!([0], color=:black, label="", style=:dot)
 xticks!(t)
 xlabel!("Years Since Crisis")
 ylabel!("GDP Growth (%)")
-savefig(string(CurrentPath, "Figures\\AvgPathCrises_WithWithout.pdf"))
-
+savefig(joinpath(output_directory, "AvgPathCrises_WithWithout.pdf"))
 
 #########################################################################################
 # Run Synthetic Control and Make Graphs (Both Main and Appendix)						#
@@ -157,7 +162,7 @@ MeanPlaceboVsSynthetics	= zeros(size(growths)[1],2)
 		end
 plot(t, MeanPlaceboVsSynthetics, linewidth=[2.5 2], color=[treatedblue controlred], label=["\"Treated\"" "Synthetic"],xticks=collect(-5:1:5), ylabel="Percentage Points", xlabel="Years Since Crisis", style=[:solid :dashdot], legend=:bottomleft)
 vline!([0], linestyle=:dash, linewidth=.75, color=:black, label="")
-savefig(string(CurrentPath, "Figures\\PlaceboGrowthRates.pdf"))
+savefig(joinpath(output_directory, "PlaceboGrowthRates.pdf"))
 
 
 ## NOW THAT I HAVE NULL VARIANCES I CAN MOVE TO RUNNING ACTUAL SYNTHETICS
@@ -176,7 +181,7 @@ culprit = DonorWeights[DonorWeights[:TotalWeight].>3.5, :]
 histogram(TotalWeight, bins=30, xticks=collect(0:1:5), color=treatedblue, label="", ylabel="Frequency"
 , xlabel="Total (Sum) of Weights in the 99 Synthetics", guidefont=9)
 vline!([size(TreatedMatched)[1]/NNoIMF], color=controlred, label="Equal Weights Baseline", style=:dot, linewidth=2)
-savefig(string(CurrentPath, "Figures\\Histogram.pdf"))
+savefig(joinpath(output_directory, "Histogram.pdf"))
 
 ## MAKE TABLE OF NON-TARGETED MOMENTS
 #First keep any obs that have full growth rates
@@ -185,7 +190,7 @@ EligibleDonors[:ID] = collect(1:1:size(EligibleDonors)[1])
 tabletemp = [growths; :ID]
 CompleteDonors = EligibleDonors[:, tabletemp]
 CompleteDonors = CompleteDonors[completecases(CompleteDonors), :]
-EligibleDonors = join(EligibleDonors, CompleteDonors, on=:ID, kind=:inner)
+EligibleDonors = join(EligibleDonors, CompleteDonors, on=:ID, kind=:inner, makeunique=true)
 
 ## NOW MAKE TABLE
 foravg = [:EXDEBT, :CAB, :GDPRank, :pop, :Gshare, :Infl]
@@ -220,9 +225,9 @@ tempy = tempx
 ylo = tempx .- 2.5
 yhi = tempx .+ 2.5
 plot!(tempx, tempy, label="y=x", style=:solid, color=:black, ylims=(-15, 15))
-savefig("C:\\Users\\kevin\\Desktop\\IMF\\AERInsights\\Figures\\Diagnostic.pdf")
+savefig(joinpath(output_directory, "Diagnostic.pdf"))
 plot!(tempx,[ylo yhi], label=["+/- 2.5" ""], style=[:dot :dot], color=:black, ylims=(-15,15))
-savefig(string(CurrentPath, "Figures\\DiagnosticRobustness.pdf"))
+savefig(joinpath(output_directory, "DiagnosticRobustness.pdf"))
 
 ## BEFORE/AFTER GROWTH RATES
 
@@ -237,7 +242,7 @@ MeanTreatedVsSynthetics		= zeros(size(growths)[1],2)
 		end
 plot(t, MeanTreatedVsSynthetics, linewidth=[2.5 2], color=[treatedblue controlred], label=["Treated" "Synthetic"],xticks=collect(-5:1:size(predict)[1]), ylabel="Percentage Points", xlabel="Years Since Crisis", style=[:solid :dashdot], legend=:bottomleft)
 vline!([0], linestyle=:dashdot, linewidth=.75, color=:black, label="")
-savefig(string(CurrentPath, "Figures\\TreatedGrowthRates.pdf"))
+savefig(joinpath(output_directory, "TreatedGrowthRates.pdf"))
 
 
 for z = (TreatedMatched, Synthetics)
@@ -268,7 +273,7 @@ BetasWithStdErrors = zeros(size(predict)[1],2)
 			BetasWithStdErrors[k,2] = MainBetas[k] + sqrt(NullCovariance[k,k]/N)
 		end
 
-#Hoteling T-sq for joint significance of first 5 coefficients
+#------ Hoteling T-sq for joint significance of first 5 coefficients ------- #
 HotellingT = N*MainBetas'*inv(NullCovariance)*MainBetas
 TranslatedToFDist = HotellingT*(N-6)/((N-1)*6) 
 ### Check p value of this number on F-dist(6,N-6)
@@ -278,21 +283,29 @@ PVal = ccdf(F, TranslatedToFDist)
 plot(collect(0:1:size(predict)[1]), [0; MainBetas], linewidth=2.5, color=:black, label="", ylabel="Increase in Output (%)", xlabel="Years From Crisis", marker=([:circle], [:black], [2.5]))
 plot!(collect(0:1:size(predict)[1]), [[0; BetasWithStdErrors[:,1]] [0; BetasWithStdErrors[:,2]]], color=:gray, linestyle = :dot, label=["1 s.e." ""], legend=:bottomleft, ylims=(-3, 4.75))
 hline!([0], color=:black, style=:dot, label="")
-savefig(string(CurrentPath, "Figures\\MainIRF.pdf"))
+savefig(joinpath(output_directory, "MainIRF.pdf"))
 
 density(MainDiffDataFrame[:LevelDiff2], color=treatedblue, yticks=nothing, xlabel="Level Difference", label="t=2", legend=:topleft, style=:solid, linewidth=2)
 density!(MainDiffDataFrame[:LevelDiff3], color=treatedblue, style=:dashdot, label="t=3", linewidth=2)
 density!(MainDiffDataFrame[:LevelDiff4], color=treatedblue, style=:dot, label="t=4", linewidth=2)
 vline!([0], color=:black, style=:dot, label="")
-savefig(string(CurrentPath, "Figures\\MainDensity.pdf"))
+savefig(joinpath(output_directory, "MainDensity.pdf"))
 
-## HETEROGENEITY (IS IT IMPORTANT?)
+# -------- Cumulative Effect Size By Treated ------- $
+TreatedMatched[:CumulativeEffect] = map((x1,x2,x3,x4,x5, x6) -> +(x1, x2, x3, x4, x5, x6), TreatedMatched[:LevelDiff1], TreatedMatched[:LevelDiff2], TreatedMatched[:LevelDiff3], TreatedMatched[:LevelDiff4], TreatedMatched[:LevelDiff5], TreatedMatched[:LevelDiff6])
+
+# -------- Heterogeneity Results ------------------- #
+
+# -- By Crisis -- #
+CrisisAverages = ByCrisisType()
+
+
 #Institution = :CPIA
 #MainDiffDataFrame[:Institution] = TreatedMatched[Institution]
 #InstDataFrame = MainDiffDataFrame[completecases(MainDiffDataFrame),:]
 #scatter(InstDataFrame[:Institution], [InstDataFrame[:LevelDiff2] InstDataFrame[:LevelDiff3]],
 #marker = [:circle :triangle], color=treatedblue, markersize=2, smooth=true,
-#ylabel="Growth Difference Between Actual\\Synthetic", xlabel="Institutional Quality", guidefont=9 )
+#ylabel="Growth Difference Between Actual\\Synthetic", xlabel="Institutional Quality", guidefont=9)
 
 #####################################################		
 # FORECAST CHECKS							   		#

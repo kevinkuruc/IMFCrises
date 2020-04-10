@@ -2,8 +2,7 @@ clear
 
 set more off
 
-cap cd "C:\Users\kevin\OneDrive\IMF"
-cap cd "C:\Users\Admin\OneDrive\IMF"
+cap cd "C:\Users\Kevin\Documents\GitHub\IMFCrises"
 ******MAKE WDI DATASET**********
 local WDIs GDP ODA CAB Infl EXDEBT NGDPUSD
 foreach v in `WDIs'{

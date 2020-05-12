@@ -8,14 +8,19 @@
 clear all
 set more off
 
-cap cd "C:\Users\kevin\OneDrive\IMF"
-cap cd "C:\Users\Admin\OneDrive\IMF"
+*Enter directory here
+cap cd "C:\Users\Kevin\Documents\GitHub\IMFCrises"
 
 use "Data\created\StandardAggregates.dta"
 merge 1:1 Country_code year using "Data\created\Forecasts.dta"
 drop _merge
 merge 1:1 Country_code year using "Data\created\ValenciaLaeven.dta" //Yugoslavia a bit weird here
 drop if _merge==2
+drop _merge
+
+merge m:1 Country using "Data\original\Regions.dta"
+replace Region="Africa" if Region=="SSA"
+drop if _merge!=3
 drop _merge
 
 merge 1:1 Country_code year using "Data\created\IMFLending.dta"
@@ -27,6 +32,14 @@ foreach s in `shorts'{
 replace Shortterm = 1 if Type=="`s'"
 }
 
+*Variables for Heterogeneity
+merge m:1 Country_code using "Data\created\WGI.dta"
+drop if _merge==2
+drop _merge
+
+merge 1:1 Country_code year using "Data\created\conditions.dta"
+drop if _merge==2
+drop _merge
 **DATA MERGED IN
 
 ******************************************************************************
@@ -115,7 +128,7 @@ replace Type = Type[_n+1] if treat==1 & Type==""
 *drop if Country=="Equatorial Guinea" & year==1994 //BIG OUTLIER, LEAVE IN AS DEFAULT BUT CHECK WITHOUT
 #delimit ;
 local ForJulia Country year IMF advecon Banking Currency Debt LGrowth5 LGrowth4 LGrowth3 LGrowth2 LGrowth1
-DWDI FGrowth1 FGrowth2 FGrowth3 FGrowth4 FGrowth5 FGrowth6
+DWDI FGrowth1 FGrowth2 FGrowth3 FGrowth4 FGrowth5 FGrowth6 Region WGI conditions AmountAgreedPercentGDP
 EXDEBT CAB Infl GDPRank pop Gshare rgdpe
 nowcast Fcast1 Fcast2 Fcast3 Fcast4 Fcast5;
 #delimit cr

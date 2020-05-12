@@ -13,9 +13,9 @@ function GenSynthetics(Treated::DataFrame, Pool::DataFrame, matchon::Array{Symbo
 		end
 
 	#################################################################
-	# First step is to get rid of any observations missing either the matching variables
-	# or the main outcome variable we plan to track (growth paths here)
+	# Step 1: drop observations missing either variable used in analysis
 	#################################################################
+
 	bign = size(Treated)[1]
 	bigp = size(Pool)[1]
 	Treated[:ID] = collect(1:1:bign)
@@ -31,88 +31,98 @@ function GenSynthetics(Treated::DataFrame, Pool::DataFrame, matchon::Array{Symbo
 	Pool = join(Pool, PoolCompleteID, on=:ID, kind=:inner)
 	completen = size(Treated)[1]
 	completep = size(Pool)[1]
+
 	############################################################
-	# Now have only treated and controls with full growth data
+	# Step 2: Redefine IDs, Declare DataFrames that will be output
 	############################################################
 	
 	Treated[:ID] = collect(1:1:completen)
 	Pool[:ID] = collect(1:1:completep)
-	#println("Put in new IDs")
 	Weights = Pool[:, [:Country, :year, :ID]]
-	Synthetic = Pool[1,[[:Country, :year]; matchon; predict]]
+	Synthetic = DataFrame(Pool[1,[[:Country, :year]; matchon; predict]])
 	Synthetic[:SqError] = [0.]
 	deleterows!(Synthetic, 1)
-	TreatedMatched = Treated[1,:]
-	deleterows!(TreatedMatched,1)
+	TreatedMatched = DataFrame(Treated[1,:])
+	deleterows!(TreatedMatched, 1)
+
+	#############################################################
+	# Step 3: Loop over Treated, make synthetics
+	#############################################################
+
 	for i = 1:completen
-		obs = Treated[i,:]  #pull one obs to match
-		LocalPool = Pool[Pool[:year].>0,:]  #just want to copy 
-		country = obs[1, :Country]
-		yr = obs[1, :year]
+		#------ Pull the observation to match & defines its Synthetic ------- #
+		obs = Treated[i,:] 
+		country = obs[:Country]
+		yr = obs[:year]
+		
+		# ------ Get the values of the variables to match --------------------#
 		tomatch = ones(m)   # the vector of data to minimize distance between
-			for v = 1:m  #populate this vector
-				j = convert(Array, obs[matchon[v]])
-				tomatch[v] = j[1]
-			end
-			#Trim to only local matches
-			for v = 1:m
+		for v = 1:m  #populate this vector
+			tomatch[v] = obs[matchon[v]]
+		end
+
+		# ------ Copy Donor Pool; keep only observations within matching bounds#
+		LocalPool = copy(Pool) 
+		for v = 1:m
 			q  = size(LocalPool)[1]
 			LocalPool = LocalPool[abs.(LocalPool[matchon[v]]-tomatch[v]*ones(q)).<localtol[v],:]
-			end
-			q = size(LocalPool)[1] #trimmed to local size
-			PoolWeight = DataFrame(ID = LocalPool[:ID])
-	if q==0
-		println("$country $yr has no local matches")
-	else
-		println("$country $yr has local matches!")
-		obsvec = convert(Array, obs)
-		poolMatrixMatching = ones(q,m)
-			for v = 1:m
-				poolMatrixMatching[:,v] = convert(Array, LocalPool[:,matchon[v]])
-			end
-		poolMatrixMatching = poolMatrixMatching'
-		weightmatrix = zeros(m,m)
-			for M in 1:m
-			weightmatrix[M,M] = matchweights[M]
-			end
-
-	#Now need to declare as a model to minimize over
-		function SSE(x)
-			(weightmatrix*(tomatch - poolMatrixMatching*x))'*(weightmatrix*(tomatch - poolMatrixMatching*x))	
 		end
-		function sumone(x)
-			sum(x) -1
-		end
-		opt = Opt(:LN_COBYLA, q)
-		lower_bounds!(opt, zeros(q))
-		upper_bounds!(opt, ones(q))
-		equality_constraint!(opt, (x, grad) -> sumone(x), 1e-10)
-		ftol_rel!(opt, 1e-8)
-		xtol_rel!(opt, 1e-5)
-		maxtime!(opt, 60)
-		#maxeval!(opt, 50)  #maxtime seemed to fail on certain runs so added this only for an appendix check
-		min_objective!(opt, (x, grad) -> SSE(x))  #calls on the inner function above 
+		q = size(LocalPool)[1] #trimmed to local size
+		PoolWeight = DataFrame(ID = LocalPool[:ID])
+		
+		# ------- If no local donors, move on; if donors, minimize sq errors --#
+		if q==0
+			println("$country $yr has no local matches")
+		else
+			println("$country $yr has local donors!")
+			obsvec = convert(Array, obs)
+		# ------ Define these things are matrices instead of DataFrames -------- #
+			poolMatrixMatching = ones(q,m)
+				for v = 1:m
+					poolMatrixMatching[:,v] = convert(Array, LocalPool[:,matchon[v]])
+				end
+			poolMatrixMatching = poolMatrixMatching'
+			weightmatrix = zeros(m,m)
+				for M in 1:m
+					weightmatrix[M,M] = matchweights[M]
+				end
 
-		initguess = 1/q * ones(q)
-		(sol, weight, ret) = optimize(opt, initguess);
-		#Now want to create my synthetic observation
-		if sol < matchtol
-		RelevantPoolData = LocalPool[:, [matchon; predict]]
-		poolForCollapse = convert(Array, RelevantPoolData)
-		Collapsed = weight'*poolForCollapse
-		Synthvect = ["Synthetic $country" yr Collapsed sol]
-		push!(Synthetic, Synthvect)
-		println("Pushed Synthetic")
-		foradd = convert(Array, Treated[i,:])
-		push!(TreatedMatched, foradd)
-		println("Pushed Treated")
-		PoolWeight[:weight] = weight
-		Weights = join(Weights, PoolWeight, on=:ID, kind=:outer)
+		#------ Declare the function to minimize over and constraint------------- #
+			function SSE(x)
+				(weightmatrix*(tomatch - poolMatrixMatching*x))'*(weightmatrix*(tomatch - poolMatrixMatching*x))	
+			end
+			function sumone(x)
+				sum(x) -1
+			end
+			opt = Opt(:LN_COBYLA, q)
+			lower_bounds!(opt, zeros(q))
+			upper_bounds!(opt, ones(q))
+			equality_constraint!(opt, (x, grad) -> sumone(x), 1e-10)
+			ftol_rel!(opt, 1e-8)
+			xtol_rel!(opt, 1e-5)
+			maxtime!(opt, 60)
+			#maxeval!(opt, 50)  #maxtime seemed to fail on certain runs so added this only for an appendix check
+			min_objective!(opt, (x, grad) -> SSE(x))  #calls on the inner function above 
+
+			initguess = 1/q * ones(q)
+			(sol, weight, ret) = optimize(opt, initguess);
+			# ---- Now plug solution into output dataframes ------ #
+			if sol < matchtol
+			RelevantPoolData = LocalPool[:, [matchon; predict]]
+			poolForCollapse = convert(Array, RelevantPoolData)
+			Collapsed = weight'*poolForCollapse
+			Synthvect = ["Synthetic $country" yr Collapsed sol]
+			push!(Synthetic, Synthvect)
+			foradd = convert(Array, Treated[i,:])
+			push!(TreatedMatched, foradd)
+			PoolWeight[:weight] = weight
+			Weights = join(Weights, PoolWeight, on=:ID, kind=:outer, makeunique=true)
+			end
 		end
 	end
-	end
+
 	#########################################
-	# Need to replace missing weights with 0
+	# Finally: For treated observations that had no local donors, replace missing weights with 0
 	#########################################
 	NMatched = size(TreatedMatched)[1]
 	for i = 1:NMatched+3  #have 3 extra rows for country, year id

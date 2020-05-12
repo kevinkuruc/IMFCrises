@@ -1,0 +1,65 @@
+using GLM
+## Crisis Type
+	Temp = dropmissing(TreatedMatched[:, [:Country, :year, :Banking, :Currency, :Debt, :CumulativeEffect]])
+	n = size(Temp)[1]
+	println("N is $n")
+	lm(@formula(CumulativeEffect ~ 0 + Banking + Currency + Debt), Temp)
+
+## Region
+	Temp = dropmissing(TreatedMatched[:, [:Country, :year, :Region, :CumulativeEffect]])
+	n = size(Temp)[1]
+		println("N is $n")
+	for r in (:Africa, :Asia, :Europe, :Island, :LatAm, :MidEast)
+		s = string(r)
+		array = zeros(n)	
+			for i = 1:n
+				if Temp[i, :Region] == s
+					array[i] = 1
+				end
+			end
+		Temp[r] = array
+	end
+ 	lm(@formula(CumulativeEffect ~ 0 + Africa + Asia + Europe + Island + LatAm + MidEast), Temp)
+##Loan Size
+	Temp = dropmissing(TreatedMatched[:, [:Country, :year, :AmountAgreedPercentGDP, :CumulativeEffect]])
+	Temp = Temp[Temp[:,:AmountAgreedPercentGDP].<30, :]
+		n = size(Temp)[1]
+		println("N is $n")
+	lm(@formula(CumulativeEffect ~ AmountAgreedPercentGDP), Temp)
+##Conditions
+	Temp = dropmissing(TreatedMatched[:, [:Country, :year, :conditions, :CumulativeEffect]])
+			n = size(Temp)[1]
+		println("N is $n")
+	lm(@formula(CumulativeEffect ~ conditions), Temp)
+##Governance
+	Temp = dropmissing(TreatedMatched[:, [:Country, :year, :WGI, :CumulativeEffect]])
+				n = size(Temp)[1]
+		println("N is $n")
+	lm(@formula(CumulativeEffect ~ WGI), Temp)
+##Time Trend
+	Temp = dropmissing(TreatedMatched[:, [:Country, :year, :CumulativeEffect]])
+					n = size(Temp)[1]
+		println("N is $n")
+		Temp[:year] = Temp[:year] - 1990*ones(n)
+	lm(@formula(CumulativeEffect ~ year), Temp)
+##All w/Crisis
+	Temp = dropmissing(TreatedMatched[:, [:Country, :year, :Region, :Banking, :Currency, :Debt, :AmountAgreedPercentGDP, :conditions, :WGI, :CumulativeEffect]])
+	Temp = Temp[Temp[:,:AmountAgreedPercentGDP].<30, :]
+						n = size(Temp)[1]
+		println("N is $n")
+	Temp[:year] = Temp[:year] - 1990*ones(n)
+	lm(@formula(CumulativeEffect ~ AmountAgreedPercentGDP + conditions + year + WGI), Temp)
+	lm(@formula(CumulativeEffect ~ 0 + Banking + Currency + Debt + AmountAgreedPercentGDP + conditions + year + WGI), Temp)
+##All w/Region
+	n = size(Temp)[1]
+	for r in (:Africa, :Asia, :Europe, :Island, :LatAm, :MidEast)
+		s = string(r)
+		array = zeros(n)	
+			for i = 1:n
+				if Temp[i, :Region] == s
+					array[i] = 1
+				end
+			end
+		Temp[r] = array
+	end
+lm(@formula(CumulativeEffect ~ 0 + Africa + Asia + Europe + Island + LatAm + MidEast + AmountAgreedPercentGDP + conditions + year + WGI), Temp)

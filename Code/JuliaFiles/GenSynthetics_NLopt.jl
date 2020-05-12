@@ -13,7 +13,7 @@ function GenSynthetics(Treated::DataFrame, Pool::DataFrame, matchon::Array{Symbo
 		end
 
 	#################################################################
-	# Step 1: drop observations missing either a variable used in analysis
+	# Step 1: drop observations missing either variable used in analysis
 	#################################################################
 
 	bign = size(Treated)[1]

@@ -25,6 +25,7 @@ using Distributions
 include(joinpath(code_directory, "LinearRegression.jl"))
 include(joinpath(code_directory, "RunningPlacebosFunction.jl"))
 include(joinpath(code_directory, "Crisis_Heterogeneity.jl"))
+include(joinpath(code_directory, "Heterogeneity_Correlation.jl"))
 
 
 #############################################################
@@ -292,20 +293,15 @@ vline!([0], color=:black, style=:dot, label="")
 savefig(joinpath(output_directory, "MainDensity.pdf"))
 
 # -------- Cumulative Effect Size By Treated ------- $
-TreatedMatched[:CumulativeEffect] = map((x1,x2,x3,x4,x5, x6) -> +(x1, x2, x3, x4, x5, x6), TreatedMatched[:LevelDiff1], TreatedMatched[:LevelDiff2], TreatedMatched[:LevelDiff3], TreatedMatched[:LevelDiff4], TreatedMatched[:LevelDiff5], TreatedMatched[:LevelDiff6])
+TreatedMatched[:CumulativeEffect] = map((x1,x2,x3,x4,x5) -> +(x1, x2, x3, x4, x5), MainDiffDataFrame[:LevelDiff1], MainDiffDataFrame[:LevelDiff2], MainDiffDataFrame[:LevelDiff3], MainDiffDataFrame[:LevelDiff4], MainDiffDataFrame[:LevelDiff5])
+MainMean = mean(TreatedMatched[:CumulativeEffect])
+println("Average Cumulative Effect is $MainMean")
 
 # -------- Heterogeneity Results ------------------- #
 
 # -- By Crisis -- #
 CrisisAverages = ByCrisisType()
-
-
-#Institution = :CPIA
-#MainDiffDataFrame[:Institution] = TreatedMatched[Institution]
-#InstDataFrame = MainDiffDataFrame[completecases(MainDiffDataFrame),:]
-#scatter(InstDataFrame[:Institution], [InstDataFrame[:LevelDiff2] InstDataFrame[:LevelDiff3]],
-#marker = [:circle :triangle], color=treatedblue, markersize=2, smooth=true,
-#ylabel="Growth Difference Between Actual\\Synthetic", xlabel="Institutional Quality", guidefont=9)
+HeterogeneityScatter(:WGI)
 
 #####################################################		
 # FORECAST CHECKS							   		#

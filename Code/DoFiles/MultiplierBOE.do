@@ -8,8 +8,8 @@
 clear all
 set more off
 
-cap cd "C:\Users\kevin\OneDrive\IMF"
-cap cd "C:\Users\Admin\OneDrive\IMF"
+*Enter directory here
+cap cd "C:\Users\Kevin\Documents\GitHub\IMFCrises"
 
 use "Data\created\StandardAggregates.dta"
 merge 1:1 Country_code year using "Data\created\Forecasts.dta"
@@ -53,37 +53,7 @@ sort Country_num year
 recode IMF`c' (1=0) if Type=="" & Type[_n+1]==""
 }
 
-******************************************************************************
-* GEN FORWARD AND BACKWARD DATA---MAKE DATA "SHORT" FORM
-******************************************************************************
-forvalues j = 1/5{
-gen LGrowth`j' = L`j'.DWDI
-}
 
-forvalues j = 1/6{
-gen FGrowth`j' = F`j'.DWDI
-}
-
-**Forecasts Ahead
-replace Fcast1 = F1.Fcast1
-replace Fcast2 = F2.Fcast2
-replace Fcast3 = F3.Fcast3
-replace Fcast4 = F4.Fcast4
-
-
-******************************************************************************
-* GEN CSVs TO TAKE TO JULIA & MASTER STATA FILE
-******************************************************************************
-******************
-* FIRST WITH IMF LOANS WITHOUT CRISES (FOR FIGURE 1)
-******************
-preserve
-keep if Shortterm==1
-keep L* F* DWDI Country year AmountAgreedPercentGDP
-summ AmountAgreedPercentGDP
-drop Fcast*
-export delimited "Data\created\AvgPathLoans.csv", replace
-restore
 
 ******************
 *NOW MASTER FILE FOR MAIN ANALYSES
@@ -108,13 +78,13 @@ recode control (1=.) if Type[_n-`b']!="" & yearend[_n-`b'] >= year & year[_n-`b'
 }
 
 sort Country_num year
-gen keep = treat+control
+keep if treat+control>0
 kdensity AmountAgreedPercentGDP if treat==1
 summ AmountAgreedPercentGDP if treat==1, detail
-reg ODAPercentGDP treat if keep>0
-reg F1.ODAPercentGDP treat if keep>0
-reg ODAPercentGDP treat L1.ODAPercentGDP if keep>0
-reg F1.ODAPercentGDP treat L1.ODAPercentGDP if keep>0
+reg ODAPercentGDP treat 
+reg F1.ODAPercentGDP treat 
+reg ODAPercentGDP treat L1.ODAPercentGDP 
+reg F1.ODAPercentGDP treat L1.ODAPercentGDP 
 
 
 

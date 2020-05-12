@@ -19,7 +19,7 @@ drop if _merge==2
 drop _merge
 
 merge m:1 Country using "Data\original\Regions.dta"
-replace region=="Africa" if region=="SSA"
+replace Region="Africa" if Region=="SSA"
 drop if _merge!=3
 drop _merge
 
@@ -128,7 +128,7 @@ replace Type = Type[_n+1] if treat==1 & Type==""
 *drop if Country=="Equatorial Guinea" & year==1994 //BIG OUTLIER, LEAVE IN AS DEFAULT BUT CHECK WITHOUT
 #delimit ;
 local ForJulia Country year IMF advecon Banking Currency Debt LGrowth5 LGrowth4 LGrowth3 LGrowth2 LGrowth1
-DWDI FGrowth1 FGrowth2 FGrowth3 FGrowth4 FGrowth5 FGrowth6 Region WGI conditions
+DWDI FGrowth1 FGrowth2 FGrowth3 FGrowth4 FGrowth5 FGrowth6 Region WGI conditions AmountAgreedPercentGDP
 EXDEBT CAB Infl GDPRank pop Gshare rgdpe
 nowcast Fcast1 Fcast2 Fcast3 Fcast4 Fcast5;
 #delimit cr

@@ -9,8 +9,17 @@ clear all
 set more off
 
 *Enter directory here
-cap cd "C:\Users\Kevin\Documents\GitHub\IMFCrises"
+cd "C:\Users\Kevin\Documents\GitHub\IMFCrises"
 
+*Loading in from various external sources
+do "Code\DoFiles\StandardAggregates_CleanCompile.do"
+do "Code\DoFiles\Forecasts_CleanCompile.do"
+do "Code\DoFiles\ValenciaLaeven_CleanCompile.do"
+do "Code\DoFiles\LendingData_CleanCompile.do"
+do "Code\DoFiles\Governance_CleanCompile.do"
+do "Code\DoFiles\Conditions_CleanCompile.do"
+
+*Merge here to use
 use "Data\created\StandardAggregates.dta"
 merge 1:1 Country_code year using "Data\created\Forecasts.dta"
 drop _merge

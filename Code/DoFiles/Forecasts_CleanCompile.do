@@ -1,6 +1,3 @@
-clear
-
-cd "C:\Users\kevin\OneDrive\IMF"
 import excel "Data\original\WEO_forecasts.xlsx", clear first sheet(ngdp_rpch)
 
 rename country Country

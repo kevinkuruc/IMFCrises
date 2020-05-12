@@ -1,9 +1,6 @@
 *****************************************************************************
 * Opens World Governance Indicators Dataset and Creates a Variable By Country
 *****************************************************************************
-set more off
-cd "C:\Users\Kevin\Documents\GitHub\IMFCrises\"
-
 use "Data\original\WorldGovernance.dta", clear
 rename countryname Country
 rename code Country_code

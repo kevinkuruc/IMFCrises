@@ -12,12 +12,12 @@ set more off
 cd "C:\Users\Kevin\Documents\GitHub\IMFCrises"
 
 *Loading in from various external sources
-do "Code\DoFiles\StandardAggregates_CleanCompile.do"
-do "Code\DoFiles\Forecasts_CleanCompile.do"
-do "Code\DoFiles\ValenciaLaeven_CleanCompile.do"
-do "Code\DoFiles\LendingData_CleanCompile.do"
-do "Code\DoFiles\Governance_CleanCompile.do"
-do "Code\DoFiles\Conditions_CleanCompile.do"
+*do "Code\DoFiles\StandardAggregates_CleanCompile.do"
+*do "Code\DoFiles\Forecasts_CleanCompile.do"
+*do "Code\DoFiles\ValenciaLaeven_CleanCompile.do"
+*do "Code\DoFiles\LendingData_CleanCompile.do"
+*do "Code\DoFiles\Governance_CleanCompile.do"
+*do "Code\DoFiles\Conditions_CleanCompile.do"
 
 *Merge here to use
 use "Data\created\StandardAggregates.dta"
@@ -118,7 +118,7 @@ replace control = 0 if treat==1
 *Get rid of doubles
 replace control = . if L1.Banking==1 | L1.Currency==1 | L1.Debt==1
 replace control = . if F1.treat==1
-*recode control (1 = .) if ArrType[_n+2]!="" //drop if treated by IMF 2 years afterwards
+recode control (1 = .) if Type[_n+2]!="" //drop if treated by IMF 2 years afterwards
 replace treat = . if L1.Banking==1 | L1.Currency==1 | L1.Debt==1
 gen IMF = 1 if treat==1
 replace IMF = 0 if control==1
@@ -149,4 +149,29 @@ summ AmountAgreedPercentGDP if treat==1, detail
 keep `ForJulia'
 save "Data\created\MasterData.dta", replace
 export delimited using "Data\created\MasterData.csv", replace
+restore 
+
+*** Now PWT iteration of data
+forvalues j = 1/5{
+replace LGrowth`j' = L`j'.DPWT
+}
+
+forvalues j = 1/6{
+replace FGrowth`j' = F`j'.DPWT
+}
+
+#delimit ;
+local ForJulia Country year IMF advecon Banking Currency Debt LGrowth5 LGrowth4 LGrowth3 LGrowth2 LGrowth1
+DPWT FGrowth1 FGrowth2 FGrowth3 FGrowth4 FGrowth5 FGrowth6 Region WGI conditions AmountAgreedPercentGDP
+EXDEBT CAB Infl GDPRank pop Gshare rgdpe
+nowcast Fcast1 Fcast2 Fcast3 Fcast4 Fcast5;
+#delimit cr
+preserve 
+keep if treat==1 | control==1
+count if treat==1 
+count if control==1
+summ AmountAgreedPercentGDP if treat==1, detail
+keep `ForJulia'
+save "Data\created\MasterData_PWT.dta", replace
+export delimited using "Data\created\MasterData_PWT.csv", replace
 restore 

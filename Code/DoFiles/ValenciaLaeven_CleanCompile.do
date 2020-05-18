@@ -52,3 +52,4 @@ drop `vars'
 reshape long Banking Currency Debt, i(Country_code) j(year)
 rename Country_VL Country
 order Country Country_code year Banking Currency Debt
+save "Data\created\ValenciaLaeven.dta", replace

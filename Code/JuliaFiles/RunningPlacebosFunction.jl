@@ -3,7 +3,7 @@
 using CSV 
 using DataFrames
 
-include("GenSynthetics_NLopt.jl")
+include(joinpath(code_directory, "GenSynthetics_NLopt.jl"))
 
 function RunningPlacebos(matchon, W, bounds, predict, Pool::DataFrame)
 
@@ -33,7 +33,6 @@ function RunningPlacebos(matchon, W, bounds, predict, Pool::DataFrame)
 
     #Loops over and runs the Synthetic Controls for each placebo against all others given specification
     for j = 1:size(Pool)[1]
-        println("Another One!")
         placebo = Pool[Pool[:i].==j, relevant] 
         if size(placebo)[1]>0
             dropplaceb = Pool[Pool[:i].!=j, relevant]
@@ -54,7 +53,5 @@ function RunningPlacebos(matchon, W, bounds, predict, Pool::DataFrame)
     end
 return TreatPlaceb, SyntheticPlacebos
 end
-
-println("This function takes: matching variables, weights on these matches, outcomes to predict, and Pool DataFrame as arguments and returns two DataFrames: placebos that have matches and then their synthetic controls.")
 
 

@@ -1,10 +1,3 @@
-clear 
-
-set more off
-
-cap cd "C:\Users\Kevin\Documents\GitHub\IMFCrises"
-cap cd "C:\Users\Admin\OneDrive\IMF"
-
 import excel using "Data\\original\\FundPrograms.xlsx", clear firstrow
 
 gen year = year(Start)

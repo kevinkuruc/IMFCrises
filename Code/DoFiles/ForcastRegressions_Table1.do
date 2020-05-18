@@ -3,7 +3,6 @@ clear all
 set more off
 
 cap cd "C:\Users\kevin\OneDrive\IMF"
-cap cd "C:\Users\Admin\OneDrive\IMF"
 
 import delimited "Data\created\TreatedTable.csv", clear
 tempfile Treated

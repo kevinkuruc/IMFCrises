@@ -1,10 +1,7 @@
 *****************************************************************************
-* Opens World Governance Indicators Dataset and Creates a Variable By Country
+* Opens Conditionality Dataset and Creates a Variable By Country
 *****************************************************************************
-set more off
-cd "C:\Users\Kevin\Documents\GitHub\IMFCrises\"
-
-use "Data\original\IMF_Conditionality.dta", clear
+use "Data\original\inetdataset_main.dta", clear
 rename cname Country
 rename ccode Country_code
 

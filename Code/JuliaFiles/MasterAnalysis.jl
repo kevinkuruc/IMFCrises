@@ -31,8 +31,8 @@ include(joinpath(code_directory, "RunningPlacebosFunction.jl"))
 include(joinpath(code_directory, "CrisisType_Region_Heterogeneity.jl"))
 include(joinpath(code_directory, "Heterogeneity_Correlation.jl"))
 
-t = collect(-5:1:6)
-growths = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI, :FGrowth1, :FGrowth2, :FGrowth3, :FGrowth4, :FGrowth5, :FGrowth6]
+t = collect(-5:1:7)
+growths = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI, :FGrowth1, :FGrowth2, :FGrowth3, :FGrowth4, :FGrowth5, :FGrowth6, :FGrowth7]
 treatedblue = :black
 controlred = RGB(120/255, 120/255, 120/255)
 
@@ -80,7 +80,7 @@ savefig(joinpath(output_directory, "SummaryPath.pdf"))
 
 AllData					= CSV.read(joinpath(data_directory, "created", "MasterData.csv"))
 NAllCrises 				= size(AllData)[1]
-println("Number of total crises for path is $NAllCrises")
+#println("Number of total crises for path is $NAllCrises")
 		for z in (:Banking, :Currency, :Debt)
        		AllData[z] = AllData[z]*.5*2
 		end
@@ -129,7 +129,7 @@ savefig(joinpath(output_directory, "AvgPathCrises_WithWithout.pdf"))
 
 W 		= ones(10,1)  #diaganol of weighting matrix (equal weights in baseline)
 matchon = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI, :Banking, :Currency, :Debt]
-predict = [:FGrowth1, :FGrowth2, :FGrowth3, :FGrowth4, :FGrowth5, :FGrowth6]
+predict = [:FGrowth1, :FGrowth2, :FGrowth3, :FGrowth4, :FGrowth5, :FGrowth6, :FGrowth7]
 matchtol= Inf	  ### For if I want to throw away bad matches 
 B 		= 7
 bounds  = [B, B, B, B, B, B, .5, .5, .5]
@@ -140,13 +140,13 @@ include("RunningPlacebosFunction.jl")
 (Placebos, SyntheticPlacebos) = RunningPlacebos(matchon, W, bounds, predict, NoIMFCrises);
 
 NullErrors = DataFrame()
-PostErrors = [:PostError1, :PostError2, :PostError3, :PostError4, :PostError5, :PostError6]
-PostGrowths = [:PostGrowth1, :PostGrowth2, :PostGrowth3, :PostGrowth4, :PostGrowth5, :PostGrowth6]
+PostErrors = [:PostError1, :PostError2, :PostError3, :PostError4, :PostError5, :PostError6, :PostError7]
+PostGrowths = [:PostGrowth1, :PostGrowth2, :PostGrowth3, :PostGrowth4, :PostGrowth5, :PostGrowth6, :PostGrowth7]
 for (pe, pg) in zip(PostErrors, PostGrowths)
 	NullErrors[pe] = map((x,y) -> x-y, Placebos[pg], SyntheticPlacebos[pg])
 end
 
-NullErrorsArray			= convert(Array, [NullErrors[:PostError1] NullErrors[:PostError2] NullErrors[:PostError3] NullErrors[:PostError4] NullErrors[:PostError5] NullErrors[:PostError6]])
+NullErrorsArray			= convert(Array, [NullErrors[:PostError1] NullErrors[:PostError2] NullErrors[:PostError3] NullErrors[:PostError4] NullErrors[:PostError5] NullErrors[:PostError6] NullErrors[:PostError7]])
 
 NullCovariance 			= (1/size(NullErrorsArray)[1])*NullErrorsArray'*NullErrorsArray  #calculate variance by hand assuming mean zero
 
@@ -167,9 +167,10 @@ for i = 1:synthtot
 end
 DonorWeights[:TotalWeight] = TotalWeight
 DonorWeights[:Matched]     = Matched
+NTreat 					   = size(TreatedMatched)[1]
 histogram(TotalWeight, bins=30, xticks=collect(0:1:5), color=treatedblue, label="", ylabel="Frequency"
-, xlabel="Total (Sum) of Weights in the 99 Synthetics", guidefont=9)
-vline!([size(TreatedMatched)[1]/NNoIMF], color=controlred, label="Equal Weights Baseline", style=:dot, linewidth=2)
+, xlabel="Total (Sum) of Weights in the $NTreat Synthetics", guidefont=9)
+vline!([NTreat/NNoIMF], color=controlred, label="Equal Weights Baseline", style=:dot, linewidth=2)
 savefig(joinpath(output_directory, "Histogram.pdf"))
 
 # -------- TABLE OF INCLUDED OBSERVATIONS (TABLE A1, A2) ------------------------------- #
@@ -206,11 +207,12 @@ for z = (TreatedMatched, Synthetics)
       z[:PostGrowth4] = map((x1,x2,x3,x4) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100)*(1+x4/100) -1), z[:FGrowth1], z[:FGrowth2], z[:FGrowth3], z[:FGrowth4])
       z[:PostGrowth5] = map((x1,x2,x3,x4,x5) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100)*(1+x4/100)*(1+x5/100) -1), z[:FGrowth1], z[:FGrowth2], z[:FGrowth3], z[:FGrowth4], z[:FGrowth5])
       z[:PostGrowth6] = map((x1,x2,x3,x4,x5, x6) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100)*(1+x4/100)*(1+x5/100)*(1+x6/100) -1), z[:FGrowth1], z[:FGrowth2], z[:FGrowth3], z[:FGrowth4], z[:FGrowth5], z[:FGrowth6])
+      z[:PostGrowth7] = map((x1,x2,x3,x4,x5, x6, x7) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100)*(1+x4/100)*(1+x5/100)*(1+x6/100)*(1+x7/100) -1), z[:FGrowth1], z[:FGrowth2], z[:FGrowth3], z[:FGrowth4], z[:FGrowth5], z[:FGrowth6], z[:FGrowth7])
 end
 
 MainDiffDataFrame = DataFrame(Country = TreatedMatched[:Country], year = TreatedMatched[:year])
-LDs = [:LevelDiff1, :LevelDiff2, :LevelDiff3, :LevelDiff4, :LevelDiff5, :LevelDiff6]
-PostGrowths = [:PostGrowth1, :PostGrowth2, :PostGrowth3, :PostGrowth4, :PostGrowth5, :PostGrowth6]
+LDs = [:LevelDiff1, :LevelDiff2, :LevelDiff3, :LevelDiff4, :LevelDiff5, :LevelDiff6, :LevelDiff7]
+PostGrowths = [:PostGrowth1, :PostGrowth2, :PostGrowth3, :PostGrowth4, :PostGrowth5, :PostGrowth6, :PostGrowth7]
 for (ld, pg) in zip(LDs, PostGrowths)
 	MainDiffDataFrame[ld] = map((x1, x2) -> x1-x2, TreatedMatched[pg], Synthetics[pg])
 end
@@ -233,7 +235,7 @@ PVal = ccdf(F, TranslatedToFDist)
 
 #------ FIGURE 3A -------------------------------------------------------------#
 plot(collect(0:1:size(predict)[1]), [0; MainBetas[:,1]], linewidth=2.5, color=:black, label="", ylabel="Increase in Output (%)", xlabel="Years From Crisis", marker=([:circle], [:black], [2.5]))
-plot!(collect(0:1:size(predict)[1]), [[0; MainBetas[:,2]] [0; MainBetas[:,3]]], color=:gray, linestyle = :dot, label=["1 s.e." ""], legend=:bottomleft, ylims=(-3, 4.75))
+plot!(collect(0:1:size(predict)[1]), [[0; MainBetas[:,2]] [0; MainBetas[:,3]]], color=:gray, linestyle = :dot, label=["1 s.e." ""], legend=:bottomleft, ylims=(-3, 5.4))
 hline!([0], color=:black, style=:dot, label="")
 savefig(joinpath(output_directory, "MainIRF.pdf"))
 
@@ -245,7 +247,7 @@ vline!([0], color=:black, style=:dot, label="")
 savefig(joinpath(output_directory, "MainDensity.pdf"))
 
 # -------- Cumulative Effect Size By Treated (Integral of IRF) ------- #
-TreatedMatched[:CumulativeEffect] = map((x1,x2,x3,x4,x5) -> +(x1, x2, x3, x4, x5), MainDiffDataFrame[:LevelDiff1], MainDiffDataFrame[:LevelDiff2], MainDiffDataFrame[:LevelDiff3], MainDiffDataFrame[:LevelDiff4], MainDiffDataFrame[:LevelDiff5])
+TreatedMatched[:CumulativeEffect] = map((x1,x2,x3,x4,x5, x6) -> +(x1, x2, x3, x4, x5, x6), MainDiffDataFrame[:LevelDiff1], MainDiffDataFrame[:LevelDiff2], MainDiffDataFrame[:LevelDiff3], MainDiffDataFrame[:LevelDiff4], MainDiffDataFrame[:LevelDiff5], MainDiffDataFrame[:LevelDiff6])
 MainMean = mean(TreatedMatched[:CumulativeEffect])
 println("Average Cumulative Effect is $MainMean")
 

@@ -15,6 +15,9 @@ qui gen Bcast2 = .
 cap qui destring S*, replace
 cap qui destring F*, replace
 
+local Seasons S F
+foreach Szn in `Seasons'{
+preserve
 forvalues yr = 1990/2016{
 scalar five = `yr' -5
 scalar four = `yr' - 4
@@ -25,7 +28,6 @@ scalar now = `yr'
 scalar Fone = `yr' + 1
 scalar Ftwo = `yr' + 2
 
-local Szn F
 cap replace Fcast5 = `Szn'`=scalar(five)'ngdp_rpch if year==`yr'
 cap replace Fcast4 = `Szn'`=scalar(four)'ngdp_rpch if year==`yr'
 cap replace Fcast3 = `Szn'`=scalar(three)'ngdp_rpch if year==`yr'
@@ -47,4 +49,8 @@ label var Bcast2 "IMF Backcast 2 yr ahead"
 keep Country Country_code year Fcast* nowcast Bcast*
 keep if Country_code!=""
 keep if year<2018
-save "Data\created\Forecasts.dta", replace
+save "Data\created\Forecasts_`Szn'.dta", replace
+restore 
+}
+
+

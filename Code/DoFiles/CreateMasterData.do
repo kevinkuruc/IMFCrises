@@ -13,7 +13,6 @@ cd "C:\Users\Kevin\Documents\GitHub\IMFCrises"
 
 *Loading in from various external sources
 *do "Code\DoFiles\StandardAggregates_CleanCompile.do"
-*do "Code\DoFiles\Forecasts_CleanCompile.do"
 *do "Code\DoFiles\ValenciaLaeven_CleanCompile.do"
 *do "Code\DoFiles\LendingData_CleanCompile.do"
 *do "Code\DoFiles\Governance_CleanCompile.do"
@@ -21,11 +20,14 @@ cd "C:\Users\Kevin\Documents\GitHub\IMFCrises"
 
 *Merge here to use
 use "Data\created\StandardAggregates.dta"
-merge 1:1 Country_code year using "Data\created\Forecasts.dta"
-drop _merge
 merge 1:1 Country_code year using "Data\created\ValenciaLaeven.dta" //Yugoslavia a bit weird here
 drop if _merge==2
 drop _merge
+
+**Count Crises for Section 1 Summary Stat
+count if Banking==1
+count if Currency==1
+count if Debt==1
 
 merge m:1 Country using "Data\original\Regions.dta"
 replace Region="Africa" if Region=="SSA"
@@ -82,15 +84,9 @@ forvalues j = 1/5{
 gen LGrowth`j' = L`j'.DWDI
 }
 
-forvalues j = 1/6{
+forvalues j = 1/7{
 gen FGrowth`j' = F`j'.DWDI
 }
-
-**Forecasts Ahead
-replace Fcast1 = F1.Fcast1
-replace Fcast2 = F2.Fcast2
-replace Fcast3 = F3.Fcast3
-replace Fcast4 = F4.Fcast4
 
 
 ******************************************************************************
@@ -103,7 +99,6 @@ preserve
 keep if Shortterm==1
 keep L* F* DWDI Country year AmountAgreedPercentGDP
 summ AmountAgreedPercentGDP
-drop Fcast*
 export delimited "Data\created\AvgPathLoans.csv", replace
 restore
 
@@ -136,10 +131,9 @@ replace Type = Type[_n+1] if treat==1 & Type==""
 
 *drop if Country=="Equatorial Guinea" & year==1994 //BIG OUTLIER, LEAVE IN AS DEFAULT BUT CHECK WITHOUT
 #delimit ;
-local ForJulia Country year IMF advecon Banking Currency Debt LGrowth5 LGrowth4 LGrowth3 LGrowth2 LGrowth1
-DWDI FGrowth1 FGrowth2 FGrowth3 FGrowth4 FGrowth5 FGrowth6 Region WGI conditions AmountAgreedPercentGDP
-EXDEBT CAB Infl GDPRank pop Gshare rgdpe
-nowcast Fcast1 Fcast2 Fcast3 Fcast4 Fcast5;
+local ForJulia Country Country_code year IMF advecon Banking Currency Debt LGrowth5 LGrowth4 LGrowth3 LGrowth2 LGrowth1
+DWDI FGrowth1 FGrowth2 FGrowth3 FGrowth4 FGrowth5 FGrowth6 FGrowth7 Region WGI conditions AmountAgreedPercentGDP
+EXDEBT CAB Infl GDPRank pop Gshare rgdpe;
 #delimit cr
 preserve 
 keep if treat==1 | control==1
@@ -156,21 +150,20 @@ forvalues j = 1/5{
 replace LGrowth`j' = L`j'.DPWT
 }
 
-forvalues j = 1/6{
+forvalues j = 1/7{
 replace FGrowth`j' = F`j'.DPWT
 }
 
-#delimit ;
-local ForJulia Country year IMF advecon Banking Currency Debt LGrowth5 LGrowth4 LGrowth3 LGrowth2 LGrowth1
-DPWT FGrowth1 FGrowth2 FGrowth3 FGrowth4 FGrowth5 FGrowth6 Region WGI conditions AmountAgreedPercentGDP
-EXDEBT CAB Infl GDPRank pop Gshare rgdpe
-nowcast Fcast1 Fcast2 Fcast3 Fcast4 Fcast5;
-#delimit cr
 preserve 
 keep if treat==1 | control==1
 count if treat==1 
 count if control==1
 summ AmountAgreedPercentGDP if treat==1, detail
+#delimit ;
+local ForJulia Country Country_code year IMF advecon Banking Currency Debt LGrowth5 LGrowth4 LGrowth3 LGrowth2 LGrowth1
+DPWT FGrowth1 FGrowth2 FGrowth3 FGrowth4 FGrowth5 FGrowth6 FGrowth7 Region WGI conditions AmountAgreedPercentGDP
+EXDEBT CAB Infl GDPRank pop Gshare rgdpe;
+#delimit cr
 keep `ForJulia'
 save "Data\created\MasterData_PWT.dta", replace
 export delimited using "Data\created\MasterData_PWT.csv", replace

@@ -1,3 +1,4 @@
+set more off
 import excel using "Data\\original\\FundPrograms.xlsx", clear firstrow
 
 gen year = year(Start)
@@ -95,9 +96,10 @@ use "Data\created\IMFLending.dta", replace
 keep if Type!=""
 gen count = 1
 collapse (sum) count AmountAgreedUSD, by(year)
-merge 1:1 year using "`CPI'"
+summ count
+qui merge 1:1 year using "`CPI'"
 
-gen RealAmountAgreed = AmountAgreedUSD*251.1/CPI/1000000 //251.1 is CPI in 2018, divide by 1000000 to put in billions
+qui gen RealAmountAgreed = AmountAgreedUSD*251.1/CPI/1000000 //251.1 is CPI in 2018, divide by 1000000 to put in billions
 summ RealAmountAgreed if year>1969 & year<2011, detail
 
 

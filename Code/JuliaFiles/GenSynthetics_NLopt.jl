@@ -98,8 +98,8 @@ function GenSynthetics(Treated::DataFrame, Pool::DataFrame, matchon::Array{Symbo
 			equality_constraint!(opt, (x, grad) -> sumone(x), 1e-10)
 			ftol_rel!(opt, 1e-8)
 			xtol_rel!(opt, 1e-5)
-			maxtime!(opt, 60)
-			#maxeval!(opt, 100)  #maxtime seemed to fail on certain runs so added this only for an appendix check
+			maxtime!(opt, 75)
+			#maxeval!(opt, 50)  #maxtime seemed to fail on certain runs so added this only for an appendix check
 			min_objective!(opt, (x, grad) -> SSE(x))  #calls on the inner function above 
 
 			initguess = 1/q * ones(q)

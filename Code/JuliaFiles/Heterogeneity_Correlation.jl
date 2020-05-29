@@ -22,7 +22,7 @@ function HeterogeneityScatter(s::Symbol)
 	else
 		xlab= "Size of Loan (as % GDP)"
 	end
-	scatter(Temp[s], Temp[:CumulativeEffect], label="", ylabel="Estimated Cumulative Effect", xlabel=xlab, markersize=[1], marker=:x, ylims=(-100,200))
+	scatter(Temp[s], Temp[:CumulativeEffect], label="", ylabel="Estimated Cumulative Effect", grid=false, xlabel=xlab, markersize=[1], marker=:x, ylims=(-100,200))
 	plot!(x, yhat, label="", linecolor=:black, linewidth=[2])
 	savefig(joinpath(output_directory, "Heterogeneity_$ss.pdf"))
 end

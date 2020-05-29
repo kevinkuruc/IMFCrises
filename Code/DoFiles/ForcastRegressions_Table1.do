@@ -1,42 +1,36 @@
+set more off 
 
-clear all
-set more off
+do "Code\DoFiles\Forecasts_CleanCompile.do"
+use "Data\created\StandardAggregates.dta", clear
+local Seasons S F
+foreach Szn in `Seasons'{
+preserve
+qui merge 1:1 Country_code year using "Data\created\Forecasts_`Szn'.dta" 
+qui drop _merge
+qui encode Country_code, gen(Country_num)
+qui xtset Country_num year
 
-cap cd "C:\Users\kevin\OneDrive\IMF"
+**Forecasts Ahead
+qui gen CumulativeFcast1 = (1+F1.Fcast1/100)
+qui gen CumulativeFcast2 = (1+F1.Fcast1/100)*(1+F2.Fcast2/100)
+qui gen CumulativeFcast3 = (1+F1.Fcast1/100)*(1+F2.Fcast2/100)*(1+F3.Fcast3/100)
 
-import delimited "Data\created\TreatedTable.csv", clear
-tempfile Treated
-save `Treated'
+qui merge 1:1 Country_code year using "Data\created\MasterData.dta"
+qui keep if _merge==3
+*drop _merge
+qui sort Country_num year
+qui gen CumulativeGrowth1=(1+FGrowth1/100)
+qui gen CumulativeGrowth2=(1+FGrowth1/100)*(1+FGrowth2/100)
+qui gen CumulativeGrowth3=(1+FGrowth1/100)*(1+FGrowth2/100)*(1+FGrowth3/100)
 
-import delimited "Data\created\ControlTable.csv", clear
-append using `Treated'
-
-rename country Country
-keep Country year matched
-merge 1:1 Country year using "Data\created\MasterData.dta"
-*drop if _merge!=3
-drop _merge
-*drop if matched!=1
-
-cap gen CumulativeFcast4 = (1+Fcast1/100)*(1+Fcast2/100)*(1+Fcast3/100)*(1+Fcast4/100)
-cap gen CumulativeGrowth4 = (1+FGrowth1/100)*(1+FGrowth2/100)*(1+FGrowth3/100)*(1+FGrowth4/100)
-
-cap gen CumulativeFcast2 = (1+Fcast1/100)*(1+Fcast2/100)
-cap gen CumulativeGrowth2=(1+FGrowth1/100)*(1+FGrowth2/100)
-
-cap gen CumulativeFcast3 = (1+Fcast1/100)*(1+Fcast2/100)*(1+Fcast3/100)
-cap gen CumulativeGrowth3=(1+FGrowth1/100)*(1+FGrowth2/100)*(1+FGrowth3/100)
-
-
-*keep if LGrowth5 !=.
-*keep if CumulativeFcast4 !=.
-*keep if CumulativeGrowth4 !=.
-drop if Currency==.
-*drop if DWDI==.
+qui keep if CumulativeFcast3 !=.
+qui keep if CumulativeGrowth3 !=.
+qui drop if Currency==.
+qui drop if DWDI==.
 local growthcontrols DWDI Banking Currency Debt
-reg FGrowth1 Fcast1 
-reg FGrowth1 Fcast1 `growthcontrols' 
-reg FGrowth1 Fcast1 IMF `growthcontrols' 
+reg CumulativeGrowth1 CumulativeFcast1  
+reg CumulativeGrowth1 CumulativeFcast1 `growthcontrols'  
+reg CumulativeGrowth1 CumulativeFcast1 IMF `growthcontrols' 
 
 reg CumulativeGrowth2 CumulativeFcast2  
 reg CumulativeGrowth2 CumulativeFcast2 `growthcontrols'  
@@ -44,18 +38,51 @@ reg CumulativeGrowth2 CumulativeFcast2 IMF `growthcontrols'
 
 reg CumulativeGrowth3 CumulativeFcast3 
 reg CumulativeGrowth3 CumulativeFcast3 `growthcontrols'   
-reg CumulativeGrowth3 CumulativeFcast3 IMF `growthcontrols'  
+reg CumulativeGrowth3 CumulativeFcast3 IMF `growthcontrols'
+restore  
+}
+*********************************************************
+* Penn World Table Starts for Appendix Table
+**********************************************************
 
-reg CumulativeGrowth4 CumulativeFcast4  
-reg CumulativeGrowth4 CumulativeFcast4 `growthcontrols' 
-reg CumulativeGrowth4 CumulativeFcast4 IMF `growthcontrols'  
+use "Data\created\StandardAggregates.dta", clear
+local Seasons S F
+foreach Szn in `Seasons'{
+preserve
+qui merge 1:1 Country_code year using "Data\created\Forecasts_`Szn'.dta" 
+qui drop _merge
+qui encode Country_code, gen(Country_num)
+qui xtset Country_num year
 
-reg CumulativeGrowth2 CumulativeFcast2 IMF
-reg CumulativeGrowth2 CumulativeFcast2 IMF DWDI
-reg CumulativeGrowth2 CumulativeFcast2 IMF DWDI Banking Currency Debt
-reg FGrowth1 Fcast1 DWDI IMF LGrowth5 Banking Currency Debt
-reg FGrowth1 Fcast1 DWDI IMF LGrowth1 LGrowth2 LGrowth3 LGrowth4 LGrowth5 Banking Currency Debt
-areg FGrowth1 Fcast1 DWDI IMF LGrowth1 LGrowth2 LGrowth3 LGrowth4 LGrowth5 Banking Currency Debt, a(year)
+**Forecasts Ahead
+qui gen CumulativeFcast1 = (1+F1.Fcast1/100)
+qui gen CumulativeFcast2 = (1+F1.Fcast1/100)*(1+F2.Fcast2/100)
+qui gen CumulativeFcast3 = (1+F1.Fcast1/100)*(1+F2.Fcast2/100)*(1+F3.Fcast3/100)
 
-*reg FGrowth1 Fcast1 DWDI Bcast1 Banking Currency Debt
+qui merge 1:1 Country_code year using "Data\created\MasterData_PWT.dta"
+qui keep if _merge==3
+*drop _merge
+qui sort Country_num year
+qui gen CumulativeGrowth1=(1+FGrowth1/100)
+qui gen CumulativeGrowth2=(1+FGrowth1/100)*(1+FGrowth2/100)
+qui gen CumulativeGrowth3=(1+FGrowth1/100)*(1+FGrowth2/100)*(1+FGrowth3/100)
+
+qui keep if CumulativeFcast3 !=.
+qui keep if CumulativeGrowth3 !=.
+qui drop if Currency==.
+qui drop if DPWT==.
+local growthcontrols DPWT Banking Currency Debt
+reg CumulativeGrowth1 CumulativeFcast1  
+reg CumulativeGrowth1 CumulativeFcast1 `growthcontrols'  
+reg CumulativeGrowth1 CumulativeFcast1 IMF `growthcontrols' 
+
+reg CumulativeGrowth2 CumulativeFcast2  
+reg CumulativeGrowth2 CumulativeFcast2 `growthcontrols'  
+reg CumulativeGrowth2 CumulativeFcast2 IMF `growthcontrols' 
+
+reg CumulativeGrowth3 CumulativeFcast3 
+reg CumulativeGrowth3 CumulativeFcast3 `growthcontrols'   
+reg CumulativeGrowth3 CumulativeFcast3 IMF `growthcontrols'
+restore  
+}
 

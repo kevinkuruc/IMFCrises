@@ -69,11 +69,11 @@ gen ODAPercentGDP = 100*ODA/NGDPUSD
 summ ODAPercentGDP, detail
 drop NGDPUSD
 
-**Label adv economies
+**Label adv economies (from: http://www.imf.org/external/pubs/ft/weo/2016/01/pdf/text.pdf)
 #delimit ;
 local adv USA DEU FRA ITA ESP NLD BEL AUT GRC PRT FIN IRL SVK
 		  SVN LUX EST CYP MLT JPN GBR CAN KOR AUS TWN SWE SGP 
-		  CHE HKG CZE NOR ISR DNK NZL ISL;
+		  CHE HKG CZE NOR ISR DNK NZL ISL LVA LTU MAC PRI SMR;
 #delimit cr
 gen advecon = 0
 foreach v in `adv'{

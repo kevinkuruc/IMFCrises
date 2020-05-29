@@ -1,6 +1,6 @@
 set more off 
 
-*do "Code\DoFiles\Forecasts_CleanCompile.do"
+do "Code\DoFiles\Forecasts_CleanCompile.do"
 use "Data\created\StandardAggregates.dta", clear
 local Seasons S F
 foreach Szn in `Seasons'{
@@ -70,8 +70,8 @@ qui gen CumulativeGrowth3=(1+FGrowth1/100)*(1+FGrowth2/100)*(1+FGrowth3/100)
 qui keep if CumulativeFcast3 !=.
 qui keep if CumulativeGrowth3 !=.
 qui drop if Currency==.
-qui drop if DWDI==.
-local growthcontrols DWDI Banking Currency Debt
+qui drop if DPWT==.
+local growthcontrols DPWT Banking Currency Debt
 reg CumulativeGrowth1 CumulativeFcast1  
 reg CumulativeGrowth1 CumulativeFcast1 `growthcontrols'  
 reg CumulativeGrowth1 CumulativeFcast1 IMF `growthcontrols' 

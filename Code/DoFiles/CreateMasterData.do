@@ -12,11 +12,11 @@ set more off
 cd "C:\Users\Kevin\Documents\GitHub\IMFCrises"
 
 *Loading in from various external sources
-*do "Code\DoFiles\StandardAggregates_CleanCompile.do"
-*do "Code\DoFiles\ValenciaLaeven_CleanCompile.do"
-*do "Code\DoFiles\LendingData_CleanCompile.do"
-*do "Code\DoFiles\Governance_CleanCompile.do"
-*do "Code\DoFiles\Conditions_CleanCompile.do"
+do "Code\DoFiles\StandardAggregates_CleanCompile.do"
+do "Code\DoFiles\ValenciaLaeven_CleanCompile.do"
+do "Code\DoFiles\LendingData_CleanCompile.do"
+do "Code\DoFiles\Governance_CleanCompile.do"
+do "Code\DoFiles\Conditions_CleanCompile.do"
 
 *Merge here to use
 use "Data\created\StandardAggregates.dta"

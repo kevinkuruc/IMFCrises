@@ -67,7 +67,7 @@ meanmedLoan = zeros(size(growths)[1],2)
 colorMean = :black
 colorMed = RGB(120/255, 120/255, 120/255)
 styleMed = :dashdot
-plot(t[1:11], meanmedLoan[1:11,:], label= ["Mean" "Median"], legend=:bottomright, color=[colorMean colorMed], style=[:solid styleMed],
+plot(t[1:11], meanmedLoan[1:11,:], label= ["Mean" "Median"], legend=:bottomright, grid=false, color=[colorMean colorMed], style=[:solid styleMed],
 linewidth=[2.5 2.5])
 vline!([0], color=:black, label="", style=:dot)
 xticks!(t)
@@ -106,7 +106,7 @@ CrisisPaths = zeros(size(growths)[1],3)
         CrisisPaths[j,2] = mean(IMFCrisesGrowths[g])
         CrisisPaths[j,3] = mean(NoIMFCrisesGrowths[g])
     end
-plot(t[1:11], CrisisPaths[1:11,1], legend=:bottomright, label="", color=:black, style=:solid, linewidth=2, ylim=(0, 4.4))
+plot(t[1:11], CrisisPaths[1:11,1], legend=:bottomright, label="", grid=false, color=:black, style=:solid, linewidth=2, ylim=(0, 4.4))
 vline!([0], color=:black, label="", style=:dot)
 xticks!(t)
 xlabel!("Years Since Crisis")
@@ -114,7 +114,7 @@ ylabel!("GDP Growth (%)")
 annotate!([(0, 3.4, text("Crisis Date", 9, :black, :left))])
 savefig(joinpath(output_directory, "AvgPathCrises_AllCrises.pdf"))
 
-plot(t[1:11], CrisisPaths[1:11,2:3], legend=:bottomright, label=["W/ IMF" "W/o IMF"], color=[treatedblue controlred], style=[:solid :dashdot], linewidth=[2 2], ylim=(0, 4.4))
+plot(t[1:11], CrisisPaths[1:11,2:3], legend=:bottomright, label=["W/ IMF" "W/o IMF"], grid=false, color=[treatedblue controlred], style=[:solid :dashdot], linewidth=[2 2], ylim=(0, 4.4))
 vline!([0], color=:black, label="", style=:dot)
 xticks!(t)
 xlabel!("Years Since Crisis")
@@ -169,19 +169,25 @@ DonorWeights[:TotalWeight] = TotalWeight
 DonorWeights[:Matched]     = Matched
 NTreat 					   = size(TreatedMatched)[1]
 histogram(TotalWeight, bins=30, xticks=collect(0:1:5), color=treatedblue, label="", ylabel="Frequency"
-, xlabel="Total (Sum) of Weights in the $NTreat Synthetics", guidefont=9)
+, xlabel="Total (Sum) of Weights in the $NTreat Synthetics", guidefont=9, grid=false)
 vline!([NTreat/NNoIMF], color=controlred, label="Equal Weights Baseline", style=:dot, linewidth=2)
 savefig(joinpath(output_directory, "Histogram.pdf"))
 
 # -------- TABLE OF INCLUDED OBSERVATIONS (TABLE A1, A2) ------------------------------- #
 TreatedMatched[:Matched] = 1
 IMFCrisesForTable = join(IMFCrises, TreatedMatched, on=[:Country, :year], kind=:outer, makeunique=true)
+completecheck = [growths; :Country; :year; :Banking; :Currency; :Debt; :Matched]
+IMFCrisesForTable = IMFCrisesForTable[:, completecheck]
+IMFCrisesForTable[:Matched] = coalesce.(IMFCrisesForTable[:,:Matched], 0)
+dropmissing!(IMFCrisesForTable)
 IMFCrisesForTable = IMFCrisesForTable[:, [:Country, :year, :Banking, :Currency, :Debt, :Matched]]
 CSV.write(joinpath(output_directory, "TableA1.csv"), IMFCrisesForTable)
 
 NoIMFCrisesForTable = join(NoIMFCrises, DonorWeights, on=[:Country, :year], kind=:outer, makeunique=true)
-NoIMFCrisesForTable = NoIMFCrisesForTable[:, [:Country, :year, :Banking, :Currency, :Debt, :TotalWeight, :Matched]]
+completecheck = [completecheck; :TotalWeight]
+NoIMFCrisesForTable = NoIMFCrisesForTable[:, completecheck]
 dropmissing!(NoIMFCrisesForTable)
+NoIMFCrisesForTable = NoIMFCrisesForTable[:, [:Country, :year, :Banking, :Currency, :Debt, :TotalWeight, :Matched]]
 CSV.write(joinpath(output_directory, "TableA2.csv"), NoIMFCrisesForTable)
 
 #--------- GROWTH RATES TREATED VS. SYNTHETIC (FIGURE 3C) ---- #
@@ -195,7 +201,7 @@ MeanTreatedVsSynthetics		= zeros(size(growths)[1],2)
 				MeanTreatedVsSynthetics[j,1] = mean(TreatedGrowthRatesArray[:,j])
 				MeanTreatedVsSynthetics[j,2] = mean(SyntheticsGrowthRatesArray[:,j])
 		end
-plot(t, MeanTreatedVsSynthetics, linewidth=[2.5 2], color=[treatedblue controlred], label=["Treated" "Synthetic"],xticks=collect(-5:1:size(predict)[1]), ylabel="Percentage Points", xlabel="Years Since Crisis", style=[:solid :dashdot], legend=:bottomleft)
+plot(t, MeanTreatedVsSynthetics, linewidth=[2.5 2], grid=false, color=[treatedblue controlred], label=["Treated" "Synthetic"],xticks=collect(-5:1:size(predict)[1]), ylabel="Percentage Points", xlabel="Years Since Crisis", style=[:solid :dashdot], legend=:bottomleft)
 vline!([0], linestyle=:dashdot, linewidth=.75, color=:black, label="")
 savefig(joinpath(output_directory, "TreatedGrowthRates.pdf"))
 
@@ -234,13 +240,13 @@ F = FDist(6, N-6)
 PVal = ccdf(F, TranslatedToFDist)
 
 #------ FIGURE 3A -------------------------------------------------------------#
-plot(collect(0:1:size(predict)[1]), [0; MainBetas[:,1]], linewidth=2.5, color=:black, label="", ylabel="Increase in Output (%)", xlabel="Years From Crisis", marker=([:circle], [:black], [2.5]))
+plot(collect(0:1:size(predict)[1]), [0; MainBetas[:,1]], linewidth=2.5, grid=false, color=:black, label="", ylabel="Increase in Output (%)", xlabel="Years From Crisis", marker=([:circle], [:black], [2.5]))
 plot!(collect(0:1:size(predict)[1]), [[0; MainBetas[:,2]] [0; MainBetas[:,3]]], color=:gray, linestyle = :dot, label=["1 s.e." ""], legend=:bottomleft, ylims=(-3, 5.4))
 hline!([0], color=:black, style=:dot, label="")
 savefig(joinpath(output_directory, "MainIRF.pdf"))
 
 # ------ FIGURE A1 ------------------------------------------------------------#
-density(MainDiffDataFrame[:LevelDiff2], color=treatedblue, yticks=nothing, xlabel="Level Difference", label="t=2", legend=:topleft, style=:solid, linewidth=2)
+density(MainDiffDataFrame[:LevelDiff2], color=treatedblue, yticks=nothing, xlabel="Level Difference", grid=false, label="t=2", legend=:topleft, style=:solid, linewidth=2)
 density!(MainDiffDataFrame[:LevelDiff3], color=treatedblue, style=:dashdot, label="t=3", linewidth=2)
 density!(MainDiffDataFrame[:LevelDiff4], color=treatedblue, style=:dot, label="t=4", linewidth=2)
 vline!([0], color=:black, style=:dot, label="")
@@ -268,7 +274,7 @@ HeterogeneityScatter(:AmountAgreedPercentGDP)
 
 # ------- APPENDIX TABLE A3, A4 ---------------#
 #Takes a long time to run, only uncomment to replicate that particular Table
-#include(PlaceboComparisonTable.jl)
+#include(joinpath(code_directory, "PlaceboComparisonTable.jl"))
 
 
 

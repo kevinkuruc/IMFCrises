@@ -1,5 +1,3 @@
-include(joinpath(code_directory, "SolveForWeights.jl"))
-
 RobustnessChecks = ["CAB" "Infl" "Debt" "WideBounds" "FreeForAll" "NoAdv" "GoodMatches" "PWT" "9Bounds" "11Bounds" "13Bounds" "15Bounds" "25Bounds"]
 Z = zeros(size(predict)[1]+1,length(RobustnessChecks))
 RobustnessChecks = [RobustnessChecks; Z]
@@ -146,26 +144,35 @@ for (h, pg) in enumerate(PostGrowths)
       RobustnessChecks[h+2,12] = mean(TempDiff)    
 end
 
+#Define gray colors
+g1 = RGB(.1,.1,.1)
+g2 = RGB(.25,.25,.25)
+g3 = RGB(.4,.4,.4)
+g4 = RGB(.53,.53,.53)
+g5 = RGB(.7,.7,.7)
+g6 = RGB(.82,.82, .82)
+g7 = RGB(.9,.9,.9)
+
 t = collect(0:1:7)
 #---GRAPH WITH ALL ROBUSTNESS (Figure 3b) --------#
-plot(t, [0; MainBetas[:,1]], linewidth=2, color=:black, label="", ylabel="", xlabel="Years From Crisis", legend=:bottomleft, legendfontsize=7, ylims=(-3,5.3), marker=([:circle], [:black], [2.5]))
-plot!(t, RobustnessChecks[2:end, 1], linewidth=1.5, color=:red, style=:dashdot, label="+CAB", marker=([:hexagon], [:red], [2]))
-plot!(t, RobustnessChecks[2:end, 2], linewidth=1.5, color=:green, style=:dashdot, label="+Infl",  marker=([:rect], [:green], [2]))
-plot!(t, RobustnessChecks[2:end, 3], linewidth=1.5, color=:blue, style=:dot, label="+Debt",  marker=([:xcross], [:blue], [2]))
-plot!(t, RobustnessChecks[2:end, 4], linewidth=1.5, color=:pink, style=:dashdot, label="Wide Bounds",  marker=([:utriangle], [:pink], [2]))
-plot!(t, RobustnessChecks[2:end, 5], linewidth=1.5, color=:gold, style=:dot, label="Any Crisis Type",  marker=([:star4], [:gold], [2]))
-plot!(t, RobustnessChecks[2:end, 6], linewidth=1.5, color=:brown, style=:dashdot, label="No Adv.",  marker=([:+], [:brown], [2]))
-plot!(t, RobustnessChecks[2:end, 7], linewidth=1.5, color=:purple, style=:dashdot, label="Good Matches",  marker=([:pentagon], [:purple], [2]))
+plot(t, [0; MainBetas[:,1]], linewidth=2, color=:black, grid=false, label="", ylabel="", xlabel="Years From Crisis", legend=(0.1,0.3), legendfontsize=7, ylims=(-3,5.3), marker=([:circle], [:black], [2.5]))
+plot!(t, RobustnessChecks[2:end, 1], linewidth=1.5, color=g1, style=:dashdot, label="+CAB", marker=([:hexagon], [g1], [2]))
+plot!(t, RobustnessChecks[2:end, 2], linewidth=1.5, color=g2, style=:dashdot, label="+Infl",  marker=([:rect], [g2], [2]))
+plot!(t, RobustnessChecks[2:end, 3], linewidth=1.5, color=g3, style=:dot, label="+Debt",  marker=([:xcross], [g3], [2]))
+plot!(t, RobustnessChecks[2:end, 4], linewidth=1.5, color=g4, style=:dashdot, label="Wide Bounds",  marker=([:utriangle], [g4], [2]))
+plot!(t, RobustnessChecks[2:end, 5], linewidth=1.5, color=g5, style=:dot, label="Any Crisis Type",  marker=([:star4], [g5], [2]))
+plot!(t, RobustnessChecks[2:end, 6], linewidth=1.5, color=g6, style=:dashdot, label="No Adv.",  marker=([:+], [g6], [2]))
+plot!(t, RobustnessChecks[2:end, 7], linewidth=1.5, color=g7, style=:dashdot, label="Good Matches",  marker=([:pentagon], [g7], [2]))
 hline!([0], color=:black, style=:dot, label="")
 savefig(joinpath(output_directory, "Robustness.pdf"))
 
 #--Something weird here--#
-plot(t, [0; MainBetas[:,1]], linewidth=2, color=:black, label="", ylabel="", xlabel="Years From Crisis", legend=:bottomleft, legendfontsize=7, ylims=(-3,5.3), marker=([:circle], [:black], [2]))
-plot!(t, RobustnessChecks[2:end, 8], linewidth=1.5, color=:red, style=:dashdot, label="PWT", marker=([:hexagon], [:red], [2]))
-plot!(t, RobustnessChecks[2:end, 9], linewidth=1.5, color=:green, style=:dashdot, label="+/-9",  marker=([:rect], [:green], [2]))
-plot!(t, RobustnessChecks[2:end, 4], linewidth=1.5, color=:blue, style=:dot, label="+/-11",  marker=([:xcross], [:blue], [2]))
-plot!(t, RobustnessChecks[2:end, 10], linewidth=1.5, color=:pink, style=:dashdot, label="+/-13",  marker=([:utriangle], [:pink], [2]))
-plot!(t, RobustnessChecks[2:end, 11], linewidth=1.5, color=:gold, style=:dot, label="+/-15",  marker=([:star4], [:gold], [2]))
-plot!(t, RobustnessChecks[2:end, 12], linewidth=1.5, color=:purple, style=:dashdot, label="+/-25",  marker=([:pentagon], [:purple], [2]))
+plot(t, [0; MainBetas[:,1]], linewidth=2, color=:black, label="", ylabel="", grid=false, xlabel="Years From Crisis", legend=(0.1,0.3), legendfontsize=7, ylims=(-3,5.3), marker=([:circle], [:black], [2]))
+plot!(t, RobustnessChecks[2:end, 8], linewidth=1.5, color=g2, style=:dashdot, label="PWT", marker=([:hexagon], [g2], [2]))
+plot!(t, RobustnessChecks[2:end, 9], linewidth=1.5, color=g3, style=:dashdot, label="+/-9",  marker=([:rect], [g3], [2]))
+plot!(t, RobustnessChecks[2:end, 4], linewidth=1.5, color=g4, style=:dot, label="+/-11",  marker=([:xcross], [g4], [2]))
+plot!(t, RobustnessChecks[2:end, 10], linewidth=1.5, color=g5, style=:dashdot, label="+/-13",  marker=([:utriangle], [g5], [2]))
+plot!(t, RobustnessChecks[2:end, 11], linewidth=1.5, color=g6, style=:dot, label="+/-15",  marker=([:star4], [g6], [2]))
+plot!(t, RobustnessChecks[2:end, 12], linewidth=1.5, color=g7, style=:dashdot, label="+/-25",  marker=([:pentagon], [g7], [2]))
 hline!([0], color=:black, style=:dot, label="")
 savefig(joinpath(output_directory, "Robustness_Appendix.pdf"))

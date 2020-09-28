@@ -29,7 +29,7 @@ function ByRegion()
 	Averages =[]
     Regions = []
     N = []
-	for r in ("Africa", "Asia", "Europe", "Island", "LatAm", "MidEast")
+	for r in ("Africa", "SA", "EAP", "ECA", "LAC", "MidEast")
 		Mean = mean(TreatedMatched[TreatedMatched[:, :Region].==r, :CumulativeEffect])
 		push!(Averages, Mean)
 		push!(Regions, r)
@@ -37,12 +37,13 @@ function ByRegion()
 	end
 Out = [Regions Averages N]
 AfricaN = N[1]
-AsiaN = N[2]
+SouthAsiaN = N[2]
+EastAsiaN = N[4]
 EuropeN = N[3]
-IslandsN = N[4]
 LatAmN = N[5]
 MidEastN = N[6]
-bar(["Africa \n ($AfricaN)", "Asia \n ($AsiaN)", "Europe \n ($EuropeN)", "Latin Am. \n ($LatAmN)", "Mid East \n ($MidEastN)", "Small Islands \n ($IslandsN)"], Averages, color=:gray, label="", grid=false, ylabel="Estimated Cumulative Effect")
+#NorthAmN = N[7]
+bar(["Africa \n ($AfricaN)", "South Asia \n ($SouthAsiaN)", "East Asia & \n Pacific \n ($EastAsiaN)", "Europe & \n Central Asia \n ($EuropeN)", "Latin Am. \n ($LatAmN)", "Mid. East \n ($MidEastN)"], Averages, color=:gray, label="", grid=false, ylabel="Estimated Cumulative Effect")
 savefig(joinpath(output_directory, "RegionsBar.pdf"))    
 return Out
 end

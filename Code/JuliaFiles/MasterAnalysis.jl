@@ -265,7 +265,7 @@ HeterogeneityScatter(:year)
 HeterogeneityScatter(:conditions)
 HeterogeneityScatter(:AmountAgreedPercentGDP)
 #---- TABLE A6 ------------------------------------------------ #
-#include(joinpath(code_directory, "Heterogeneity_Regressions.jl"))
+include(joinpath(code_directory, "Heterogeneity_Regressions.jl"))
 
 # ------- ROBUSTNESS (BOTH FIGURE 3B & APPENDIX) -------------- #
 #include(joinpath(code_directory, "RobustnessRuns.jl"))

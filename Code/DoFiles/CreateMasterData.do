@@ -29,7 +29,7 @@ count if Banking==1
 count if Currency==1
 count if Debt==1
 
-merge m:1 Country using "Data\original\Regions.dta"
+merge m:1 Country using "Data\original\Regions.dta" //entered by hand from https://datahelpdesk.worldbank.org/knowledgebase/articles/906519-world-bank-country-and-lending-groups
 replace Region="Africa" if Region=="SSA"
 drop if _merge!=3
 drop _merge

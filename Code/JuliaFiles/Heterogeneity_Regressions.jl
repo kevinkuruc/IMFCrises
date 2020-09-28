@@ -9,7 +9,7 @@ using GLM
 	Temp = dropmissing(TreatedMatched[:, [:Country, :year, :Region, :CumulativeEffect]])
 	n = size(Temp)[1]
 		println("N is $n")
-	for r in (:Africa, :Asia, :Europe, :Island, :LatAm, :MidEast)
+	for r in (:Africa, :SA, :EAP, :ECA, :LAC, :MidEast)
 		s = string(r)
 		array = zeros(n)	
 			for i = 1:n
@@ -19,7 +19,7 @@ using GLM
 			end
 		Temp[r] = array
 	end
- 	lm(@formula(CumulativeEffect ~ 0 + Africa + Asia + Europe + Island + LatAm + MidEast), Temp)
+ 	lm(@formula(CumulativeEffect ~ 0 + Africa + SA + EAP + ECA + LAC + MidEast), Temp)
 ##Loan Size
 	Temp = dropmissing(TreatedMatched[:, [:Country, :year, :AmountAgreedPercentGDP, :CumulativeEffect]])
 	Temp = Temp[Temp[:,:AmountAgreedPercentGDP].<30, :]
@@ -52,7 +52,7 @@ using GLM
 	lm(@formula(CumulativeEffect ~ 0 + Banking + Currency + Debt + AmountAgreedPercentGDP + conditions + year + WGI), Temp)
 ##All w/Region
 	n = size(Temp)[1]
-	for r in (:Africa, :Asia, :Europe, :Island, :LatAm, :MidEast)
+	for r in (:Africa, :SA, :EAP, :ECA, :LAC, :MidEast)
 		s = string(r)
 		array = zeros(n)	
 			for i = 1:n
@@ -62,4 +62,4 @@ using GLM
 			end
 		Temp[r] = array
 	end
-lm(@formula(CumulativeEffect ~ 0 + Africa + Asia + Europe + Island + LatAm + MidEast + AmountAgreedPercentGDP + conditions + year + WGI), Temp)
+lm(@formula(CumulativeEffect ~ 0 + Africa + SA + EAP + ECA + LAC + MidEast + AmountAgreedPercentGDP + conditions + year + WGI), Temp)

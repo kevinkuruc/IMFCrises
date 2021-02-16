@@ -20,7 +20,7 @@ Out = [Crisis Averages N]
 BankN = N[1]
 CurrN = N[2]
 DebtN = N[3]
-bar(["Banking \n ($BankN)", "Currency \n ($CurrN)", "Debt \n ($DebtN)"], Averages, grid=false, color=:gray, label="", ylabel="Estimated Cumulative Effect")
+bar(["Banking \n ($BankN)", "Currency \n ($CurrN)", "Debt \n ($DebtN)"], Averages, grid=false, color=treatedblue, label="", ylabel="Estimated Cumulative Effect")
 savefig(joinpath(output_directory, "CrisisTypeBar.pdf"))
 return Out
 end
@@ -43,7 +43,7 @@ EuropeN = N[3]
 LatAmN = N[5]
 MidEastN = N[6]
 #NorthAmN = N[7]
-bar(["Africa \n ($AfricaN)", "South Asia \n ($SouthAsiaN)", "East Asia & \n Pacific \n ($EastAsiaN)", "Europe & \n Central Asia \n ($EuropeN)", "Latin Am. \n ($LatAmN)", "Mid. East \n ($MidEastN)"], Averages, color=:gray, label="", grid=false, ylabel="Estimated Cumulative Effect")
+bar(["Africa \n ($AfricaN)", "South Asia \n ($SouthAsiaN)", "East Asia & \n Pacific \n ($EastAsiaN)", "Europe & \n Central Asia \n ($EuropeN)", "Latin Am. \n ($LatAmN)", "Mid. East \n ($MidEastN)"], Averages, color=treatedblue, label="", grid=false, ylabel="Estimated Cumulative Effect")
 savefig(joinpath(output_directory, "RegionsBar.pdf"))    
 return Out
 end

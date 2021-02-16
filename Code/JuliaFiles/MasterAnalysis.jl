@@ -31,27 +31,49 @@ include(joinpath(code_directory, "RunningPlacebosFunction.jl"))
 include(joinpath(code_directory, "CrisisType_Region_Heterogeneity.jl"))
 include(joinpath(code_directory, "Heterogeneity_Correlation.jl"))
 
-t = collect(-5:1:7)
-growths = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI, :FGrowth1, :FGrowth2, :FGrowth3, :FGrowth4, :FGrowth5, :FGrowth6, :FGrowth7]
-treatedblue = :black
-controlred = RGB(120/255, 120/255, 120/255)
+t = collect(-5:1:6)
+growths = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI, :FGrowth1, :FGrowth2, :FGrowth3, :FGrowth4, :FGrowth5, :FGrowth6]#, :FGrowth7]
+treatedblue = :blue
+controlred = :red
 
 
 #############################################################
 # -----------Summary Stats----------------------------------#
 #############################################################
 
-## LOAD IN ALL IMF LOAN GROWTH RATES (CENTERED AROUND LOAN)
-LoanPath = CSV.read(joinpath(data_directory, "created", "AvgPathLoans.csv"))
-tempk = [:AmountAgreedPercentGDP, :year]
-LoanSizes  = LoanPath[:, tempk]
-LoanSizes  = LoanSizes[completecases(LoanSizes),:]
-LoanSizes  = LoanSizes[LoanSizes[:AmountAgreedPercentGDP].>0,:]
-AvgSize = mean(LoanSizes[:AmountAgreedPercentGDP])
-MedSize = median(LoanSizes[:AmountAgreedPercentGDP])
-println("Mean Loan Size is $AvgSize")
-println("Median Loan Size is $MedSize")
-LoanPath = LoanPath[:, growths]
+## LOAD IN ALL IMF LOAN DATA (GROWTH RATES CENTERED AROUND LOAN)
+Loans = CSV.read(joinpath(data_directory, "created", "Loans.csv"))
+Loans = Loans[Loans[:year].>1969,:]
+Loans = Loans[Loans[:year].<2012,:]
+#Plot time series of loans vs stabilization loans 
+Stabilization_Loans = Loans[Loans[:Shortterm].==1, :]
+time_series_years = collect(1970:1:2011)
+Loan_Count = zeros(length(time_series_years),2)
+for year = 1:size(Loan_Count)[1]
+    Loan_Count[year, 1] = size(Loans[Loans[:year].==1969+year,:])[1]
+    Loan_Count[year, 2] = size(Stabilization_Loans[Stabilization_Loans[:year].==1969+year,:])[1]
+end
+plot(time_series_years, Loan_Count, label="", ylabel="Newly Originated IMF Arrangements", xlabel="", linecolor=[:gray treatedblue], linestyle=[:dash :solid], linewidth=[2 2], grid=false)
+annotate!([(1996.6, 27, text("All \n Loans", 10, :gray, :left))])
+annotate!([(1995.9, 15.15, text("Stabilization \n Loans", 10, treatedblue, :left))])
+savefig(joinpath(output_directory, "TimeSeries.pdf"))
+#Summary Stats Table
+SummaryVars = [:AmountAgreedPercentGDP, :simple_conditions, :DWDI, :Infl,  :CAB, :EXDEBT]
+SummaryStats = DataFrame(Varname = [:DWDI], Mean = [10.2], Median = [6.1], StdDev = [6.3], N = [10]) #random numbers to start table, deleted next line
+deleterows!(SummaryStats, 1)
+  for (i,s) in enumerate(SummaryVars)
+    temp_df = Stabilization_Loans[:,[:year, s]]
+    temp_df = temp_df[completecases(temp_df),:]
+    temp_arry = zeros(1,4)
+    temp_arry[1,1] = mean(temp_df[s])
+    temp_arry[1,2] = median(temp_df[s])
+    temp_arry[1,3] = sqrt(var(temp_df[s]))
+    temp_arry[1,4] = size(temp_df)[1]
+    push!(SummaryStats, [s temp_arry])
+  end
+CSV.write(joinpath(output_directory, "SummaryStats.csv"), SummaryStats)
+
+LoanPath = Stabilization_Loans[:, growths]
 LoanPath = LoanPath[completecases(LoanPath),:];
 
 ## COMPUTE MEAN/MEDIAN GROWTH RATES X YEARS AFTER LOAN
@@ -67,13 +89,13 @@ meanmedLoan = zeros(size(growths)[1],2)
 colorMean = :black
 colorMed = RGB(120/255, 120/255, 120/255)
 styleMed = :dashdot
-plot(t[1:11], meanmedLoan[1:11,:], label= ["Mean" "Median"], legend=:bottomright, grid=false, color=[colorMean colorMed], style=[:solid styleMed],
+plot(t[1:11], meanmedLoan[1:11,:], label= ["Mean" "Median"], legend=:bottomright, grid=false, color=treatedblue, style=[:solid styleMed],
 linewidth=[2.5 2.5])
 vline!([0], color=:black, label="", style=:dot)
 xticks!(t)
 xlabel!("Years Since Loan")
 ylabel!("GDP Growth (%)")
-annotate!([(0, 3.8, text("IMF Loan", 9, :black, :left))])
+annotate!([(0, 4.0, text("IMF Loan", 9, :black, :left))])
 savefig(joinpath(output_directory, "SummaryPath.pdf"))
 
 #------- FIGURE 2: Financial Crisis (a) & Split to With/Without (b) -------------------------  #
@@ -106,7 +128,7 @@ CrisisPaths = zeros(size(growths)[1],3)
         CrisisPaths[j,2] = mean(IMFCrisesGrowths[g])
         CrisisPaths[j,3] = mean(NoIMFCrisesGrowths[g])
     end
-plot(t[1:11], CrisisPaths[1:11,1], legend=:bottomright, label="", grid=false, color=:black, style=:solid, linewidth=2, ylim=(0, 4.4))
+plot(t[1:11], CrisisPaths[1:11,1], legend=:bottomright, label="", grid=false, color=:black, style=:solid, linewidth=2.5, ylim=(0, 4))
 vline!([0], color=:black, label="", style=:dot)
 xticks!(t)
 xlabel!("Years Since Crisis")
@@ -114,7 +136,7 @@ ylabel!("GDP Growth (%)")
 annotate!([(0, 3.4, text("Crisis Date", 9, :black, :left))])
 savefig(joinpath(output_directory, "AvgPathCrises_AllCrises.pdf"))
 
-plot(t[1:11], CrisisPaths[1:11,2:3], legend=:bottomright, label=["W/ IMF" "W/o IMF"], grid=false, color=[treatedblue controlred], style=[:solid :dashdot], linewidth=[2 2], ylim=(0, 4.4))
+plot(t[1:11], CrisisPaths[1:11,2:3], legend=:bottomright, label=["W/ IMF" "W/o IMF"], grid=false, color=[treatedblue controlred], style=[:solid :dashdot], linewidth=[2.5 2.5], ylim=(0, 4))
 vline!([0], color=:black, label="", style=:dot)
 xticks!(t)
 xlabel!("Years Since Crisis")
@@ -129,9 +151,9 @@ savefig(joinpath(output_directory, "AvgPathCrises_WithWithout.pdf"))
 
 W 		= ones(10,1)  #diaganol of weighting matrix (equal weights in baseline)
 matchon = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI, :Banking, :Currency, :Debt]
-predict = [:FGrowth1, :FGrowth2, :FGrowth3, :FGrowth4, :FGrowth5, :FGrowth6, :FGrowth7]
+predict = [:FGrowth1, :FGrowth2, :FGrowth3, :FGrowth4, :FGrowth5, :FGrowth6]#, :FGrowth7]
 matchtol= Inf	  ### For if I want to throw away bad matches 
-B 		= 7
+B 		  = 9
 bounds  = [B, B, B, B, B, B, .5, .5, .5]
 
 #------ RUN PLACEBO GROUP FIRST TO GENERATE VARIANCE UNDER THE NULL---------------------#
@@ -140,13 +162,13 @@ include("RunningPlacebosFunction.jl")
 (Placebos, SyntheticPlacebos) = RunningPlacebos(matchon, W, bounds, predict, NoIMFCrises);
 
 NullErrors = DataFrame()
-PostErrors = [:PostError1, :PostError2, :PostError3, :PostError4, :PostError5, :PostError6, :PostError7]
-PostGrowths = [:PostGrowth1, :PostGrowth2, :PostGrowth3, :PostGrowth4, :PostGrowth5, :PostGrowth6, :PostGrowth7]
+PostErrors = [:PostError1, :PostError2, :PostError3, :PostError4, :PostError5, :PostError6]#, :PostError7]
+PostGrowths = [:PostGrowth1, :PostGrowth2, :PostGrowth3, :PostGrowth4, :PostGrowth5, :PostGrowth6]#, :PostGrowth7]
 for (pe, pg) in zip(PostErrors, PostGrowths)
 	NullErrors[pe] = map((x,y) -> x-y, Placebos[pg], SyntheticPlacebos[pg])
 end
 
-NullErrorsArray			= convert(Array, [NullErrors[:PostError1] NullErrors[:PostError2] NullErrors[:PostError3] NullErrors[:PostError4] NullErrors[:PostError5] NullErrors[:PostError6] NullErrors[:PostError7]])
+NullErrorsArray			= convert(Array, [NullErrors[:PostError1] NullErrors[:PostError2] NullErrors[:PostError3] NullErrors[:PostError4] NullErrors[:PostError5] NullErrors[:PostError6]])# NullErrors[:PostError7]])
 
 NullCovariance 			= (1/size(NullErrorsArray)[1])*NullErrorsArray'*NullErrorsArray  #calculate variance by hand assuming mean zero
 
@@ -168,14 +190,16 @@ end
 DonorWeights[:TotalWeight] = TotalWeight
 DonorWeights[:Matched]     = Matched
 NTreat 					   = size(TreatedMatched)[1]
-histogram(TotalWeight, bins=30, xticks=collect(0:1:5), color=treatedblue, label="", ylabel="Frequency"
-, xlabel="Total (Sum) of Weights in the $NTreat Synthetics", guidefont=9, grid=false)
-vline!([NTreat/NNoIMF], color=controlred, label="Equal Weights Baseline", style=:dot, linewidth=2)
+histogram(TotalWeight, bins=30, xticks=collect(0:1:5), color=controlred, label="", ylabel="Untreated Observations",
+xlabel="Total (Sum) of Weights in the $NTreat Synthetics", guidefont=9, grid=false)
 savefig(joinpath(output_directory, "Histogram.pdf"))
 
 # -------- TABLE OF INCLUDED OBSERVATIONS (TABLE A1, A2) ------------------------------- #
 TreatedMatched[:Matched] = 1
 IMFCrisesForTable = join(IMFCrises, TreatedMatched, on=[:Country, :year], kind=:outer, makeunique=true)
+ForAvgSize        = dropmissing(IMFCrisesForTable[:,[:Matched, :AmountAgreedPercentGDP]])
+AvgLoanSize_Matched = mean(ForAvgSize[ForAvgSize[:Matched].==1, :AmountAgreedPercentGDP])
+println("Avg Loan Size for Matched Obs: $AvgLoanSize_Matched")
 completecheck = [growths; :Country; :year; :Banking; :Currency; :Debt; :Matched]
 IMFCrisesForTable = IMFCrisesForTable[:, completecheck]
 IMFCrisesForTable[:Matched] = coalesce.(IMFCrisesForTable[:,:Matched], 0)
@@ -191,7 +215,7 @@ NoIMFCrisesForTable = NoIMFCrisesForTable[:, [:Country, :year, :Banking, :Curren
 CSV.write(joinpath(output_directory, "TableA2.csv"), NoIMFCrisesForTable)
 
 #--------- GROWTH RATES TREATED VS. SYNTHETIC (FIGURE 3C) ---- #
-
+Plot_length = 6
 TreatedGrowthRatesArray		= convert(Array, TreatedMatched[growths])
 NMainRuns					= size(TreatedMatched)[1]
 println("The number of treated observations with synthetic controls is $NMainRuns")
@@ -201,7 +225,7 @@ MeanTreatedVsSynthetics		= zeros(size(growths)[1],2)
 				MeanTreatedVsSynthetics[j,1] = mean(TreatedGrowthRatesArray[:,j])
 				MeanTreatedVsSynthetics[j,2] = mean(SyntheticsGrowthRatesArray[:,j])
 		end
-plot(t, MeanTreatedVsSynthetics, linewidth=[2.5 2], grid=false, color=[treatedblue controlred], label=["Treated" "Synthetic"],xticks=collect(-5:1:size(predict)[1]), ylabel="Percentage Points", xlabel="Years Since Crisis", style=[:solid :dashdot], legend=:bottomleft)
+plot(t[1:Plot_length+6], MeanTreatedVsSynthetics[1:Plot_length+6, :], linewidth=[2.5 2], grid=false, color=[treatedblue controlred], label=["Treated" "Synthetic"],xticks=collect(-5:1:Plot_length), ylabel="Percentage Points", xlabel="Years Since Crisis", style=[:solid :dashdot], legend=:bottomleft)
 vline!([0], linestyle=:dashdot, linewidth=.75, color=:black, label="")
 savefig(joinpath(output_directory, "TreatedGrowthRates.pdf"))
 
@@ -213,12 +237,12 @@ for z = (TreatedMatched, Synthetics)
       z[:PostGrowth4] = map((x1,x2,x3,x4) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100)*(1+x4/100) -1), z[:FGrowth1], z[:FGrowth2], z[:FGrowth3], z[:FGrowth4])
       z[:PostGrowth5] = map((x1,x2,x3,x4,x5) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100)*(1+x4/100)*(1+x5/100) -1), z[:FGrowth1], z[:FGrowth2], z[:FGrowth3], z[:FGrowth4], z[:FGrowth5])
       z[:PostGrowth6] = map((x1,x2,x3,x4,x5, x6) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100)*(1+x4/100)*(1+x5/100)*(1+x6/100) -1), z[:FGrowth1], z[:FGrowth2], z[:FGrowth3], z[:FGrowth4], z[:FGrowth5], z[:FGrowth6])
-      z[:PostGrowth7] = map((x1,x2,x3,x4,x5, x6, x7) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100)*(1+x4/100)*(1+x5/100)*(1+x6/100)*(1+x7/100) -1), z[:FGrowth1], z[:FGrowth2], z[:FGrowth3], z[:FGrowth4], z[:FGrowth5], z[:FGrowth6], z[:FGrowth7])
+      #z[:PostGrowth7] = map((x1,x2,x3,x4,x5, x6, x7) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100)*(1+x4/100)*(1+x5/100)*(1+x6/100)*(1+x7/100) -1), z[:FGrowth1], z[:FGrowth2], z[:FGrowth3], z[:FGrowth4], z[:FGrowth5], z[:FGrowth6], z[:FGrowth7])
 end
 
 MainDiffDataFrame = DataFrame(Country = TreatedMatched[:Country], year = TreatedMatched[:year])
-LDs = [:LevelDiff1, :LevelDiff2, :LevelDiff3, :LevelDiff4, :LevelDiff5, :LevelDiff6, :LevelDiff7]
-PostGrowths = [:PostGrowth1, :PostGrowth2, :PostGrowth3, :PostGrowth4, :PostGrowth5, :PostGrowth6, :PostGrowth7]
+LDs = [:LevelDiff1, :LevelDiff2, :LevelDiff3, :LevelDiff4, :LevelDiff5, :LevelDiff6]#, :LevelDiff7]
+PostGrowths = [:PostGrowth1, :PostGrowth2, :PostGrowth3, :PostGrowth4, :PostGrowth5, :PostGrowth6]#, :PostGrowth7]
 for (ld, pg) in zip(LDs, PostGrowths)
 	MainDiffDataFrame[ld] = map((x1, x2) -> x1-x2, TreatedMatched[pg], Synthetics[pg])
 end
@@ -228,25 +252,28 @@ MainBetas = zeros(size(predict)[1], 3)  #with lower and upper se in cols 2, 3
 N = size(MainDiffDataFrame)[1]
 for (z, w) in enumerate(LDs)
 	MainBetas[z,1] = mean(MainDiffDataFrame[w])
-	MainBetas[z,2] = MainBetas[z,1] - sqrt(NullCovariance[z,z]/N)
-	MainBetas[z,3] = MainBetas[z,1] + sqrt(NullCovariance[z,z]/N)
+  #two ways to compute std: take max to be conservative
+  MainBetas[z,2] = MainBetas[z,1] - max(sqrt(NullCovariance[z,z]/N), std(MainDiffDataFrame[w])/sqrt(N))
+  MainBetas[z,3] = MainBetas[z,1] + max(sqrt(NullCovariance[z,z]/N), std(MainDiffDataFrame[w])/sqrt(N))  
 end
 
-#------ Hotelling T-sq for joint significance of first 5 coefficients ------- #
-HotellingT = N*MainBetas[:,1]'*inv(NullCovariance)*MainBetas[:,1]
+#------ Hotelling T-sq for joint significance of first 6 coefficients ------- #
+HotellingT = N*MainBetas[1:6,1]'*inv(NullCovariance[1:6,1:6])*MainBetas[1:6,1]
 TranslatedToFDist = HotellingT*(N-6)/((N-1)*6) 
 # ---- Check p value of this number on F-dist(6,N-6) --- #
 F = FDist(6, N-6)
 PVal = ccdf(F, TranslatedToFDist)
+println("P value for Hotelling T-sq is $PVal")
 
-#------ FIGURE 3A -------------------------------------------------------------#
-plot(collect(0:1:size(predict)[1]), [0; MainBetas[:,1]], linewidth=2.5, grid=false, color=:black, label="", ylabel="Increase in Output (%)", xlabel="Years From Crisis", marker=([:circle], [:black], [2.5]))
-plot!(collect(0:1:size(predict)[1]), [[0; MainBetas[:,2]] [0; MainBetas[:,3]]], color=:gray, linestyle = :dot, label=["1 s.e." ""], legend=:bottomleft, ylims=(-3, 5.4))
+
+#------ FIGURE 4 -------------------------------------------------------------#
+plot(collect(0:1:Plot_length), [0; MainBetas[1:Plot_length,1]], linewidth=2.5, grid=false, color=treatedblue, label="", ylabel="Increase in Output (%)", xlabel="Years From Crisis", marker=([:circle], [treatedblue], [2.5]))
+plot!(collect(0:1:Plot_length), [[0; MainBetas[1:Plot_length,2]] [0; MainBetas[1:Plot_length,3]]], color=:black, linestyle = :dot, label=["1 s.e." ""], legend=:bottomleft, ylims=(-3, 4.75))
 hline!([0], color=:black, style=:dot, label="")
 savefig(joinpath(output_directory, "MainIRF.pdf"))
 
 # ------ FIGURE A1 ------------------------------------------------------------#
-density(MainDiffDataFrame[:LevelDiff2], color=treatedblue, yticks=nothing, xlabel="Level Difference", grid=false, label="t=2", legend=:topleft, style=:solid, linewidth=2)
+density(MainDiffDataFrame[:LevelDiff2], color=treatedblue, yticks=nothing, xlabel="Level Difference", grid=false, label="t=2", legend=:topleft, style=:solid, linewidth=2, ylabel="Density")
 density!(MainDiffDataFrame[:LevelDiff3], color=treatedblue, style=:dashdot, label="t=3", linewidth=2)
 density!(MainDiffDataFrame[:LevelDiff4], color=treatedblue, style=:dot, label="t=4", linewidth=2)
 vline!([0], color=:black, style=:dot, label="")
@@ -256,8 +283,10 @@ savefig(joinpath(output_directory, "MainDensity.pdf"))
 TreatedMatched[:CumulativeEffect] = map((x1,x2,x3,x4,x5, x6) -> +(x1, x2, x3, x4, x5, x6), MainDiffDataFrame[:LevelDiff1], MainDiffDataFrame[:LevelDiff2], MainDiffDataFrame[:LevelDiff3], MainDiffDataFrame[:LevelDiff4], MainDiffDataFrame[:LevelDiff5], MainDiffDataFrame[:LevelDiff6])
 MainMean = mean(TreatedMatched[:CumulativeEffect])
 println("Average Cumulative Effect is $MainMean")
+IMF_Multiplier = MainMean/AvgLoanSize_Matched
+println("BOE multiplier is $IMF_Multiplier")
 
-# -------- Heterogeneity Results (FIGURE 4) ------------------- #
+# -------- Heterogeneity Results (FIGURE 5) ------------------- #
 CrisisAverages = ByCrisisType()
 RegionAverages = ByRegion()
 HeterogeneityScatter(:WGI)
@@ -267,7 +296,7 @@ HeterogeneityScatter(:AmountAgreedPercentGDP)
 #---- TABLE A6 ------------------------------------------------ #
 include(joinpath(code_directory, "Heterogeneity_Regressions.jl"))
 
-# ------- ROBUSTNESS (BOTH FIGURE 3B & APPENDIX) -------------- #
+# ------- ROBUSTNESS (BOTH FIGURE 4 & APPENDIX) -------------- #
 #include(joinpath(code_directory, "RobustnessRuns.jl"))
 
 # ------- TABLE 1 (AND A5) ARE MADE IN STATA [SEE "ForecastRegressoins_Table1.do"] -----------------------# 

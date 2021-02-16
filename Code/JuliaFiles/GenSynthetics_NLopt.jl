@@ -72,7 +72,7 @@ function GenSynthetics(Treated::DataFrame, Pool::DataFrame, matchon::Array{Symbo
 		
 		# ------- If no local donors, move on; if donors, minimize sq errors --#
 		if q>0
-			println("$country $yr has local donors!")
+			#println("$country $yr has local donors!")
 			obsvec = convert(Array, obs)
 		# ------ Define these things are matrices instead of DataFrames -------- #
 			poolMatrixMatching = ones(q,m)
@@ -99,7 +99,7 @@ function GenSynthetics(Treated::DataFrame, Pool::DataFrame, matchon::Array{Symbo
 			ftol_rel!(opt, 1e-8)
 			xtol_rel!(opt, 1e-5)
 			maxtime!(opt, 75)
-			#maxeval!(opt, 50)  #maxtime seemed to fail on certain runs so added this only for an appendix check
+			#maxeval!(opt, 150)  #maxtime seemed to fail on certain runs so added this only for an appendix check
 			min_objective!(opt, (x, grad) -> SSE(x))  #calls on the inner function above 
 
 			initguess = 1/q * ones(q)

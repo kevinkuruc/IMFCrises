@@ -96,10 +96,12 @@ gen FGrowth`j' = F`j'.DWDI
 * FIRST WITH IMF LOANS WITHOUT CRISES (FOR FIGURE 1)
 ******************
 preserve
-keep if Shortterm==1
-keep L* F* DWDI Country year AmountAgreedPercentGDP
-summ AmountAgreedPercentGDP
-export delimited "Data\created\AvgPathLoans.csv", replace
+keep if Type!=""
+keep L* F* DWDI Country year AmountAgreedPercentGDP Shortterm simple_conditions CAB EXDEBT Infl
+summ AmountAgreedPercentGDP if Shortterm==1 & year>1969 & year<2012, detail
+summ DWDI if Shortterm==1 & year>1969 & year<2012, detail
+summ simple_conditions if Shortterm==1 & year>1969 & year<2012, detail
+export delimited "Data\created\Loans.csv", replace
 restore
 
 ******************
@@ -143,6 +145,9 @@ summ AmountAgreedPercentGDP if treat==1, detail
 keep `ForJulia'
 save "Data\created\MasterData.dta", replace
 export delimited using "Data\created\MasterData.csv", replace
+forvalues h = 1/6{
+reg FGrowth`h' IMF Banking Currency Debt DWDI LGrowth* if FGrowth6!=.
+}
 restore 
 
 *** Now PWT iteration of data

@@ -35,11 +35,13 @@ function RunningPlacebos(matchon, W, bounds, predict, Pool::DataFrame)
     for j = 1:size(Pool)[1]
         placebo = Pool[Pool[:i].==j, relevant] 
         if size(placebo)[1]>0
-            dropplaceb = Pool[Pool[:i].!=j, relevant]
-            (Placebt, Placebj, w) = GenSynthetics(placebo, dropplaceb, matchon, predict, localtol= bounds, matchweights=W)
-            Placebt[:SqError]=0.
-            SyntheticPlacebos=[SyntheticPlacebos; Placebj]
-            TreatPlaceb = [TreatPlaceb; Placebt]
+            dropplaceb              = Pool[Pool[:i].!=j, relevant]
+            (Placebt, Placebj, w)   = GenSynthetics(placebo, dropplaceb, matchon, predict, localtol= bounds, matchweights=W)
+            Placebt[:SqError]       = 0.
+            if size(Placebj)[1]>0  #Push if non-empty synthetic generated
+            push!(SyntheticPlacebos, Placebj[1,:])
+            push!(TreatPlaceb, Placebt[1,:])
+            end
         end
     end
 
@@ -50,7 +52,7 @@ function RunningPlacebos(matchon, W, bounds, predict, Pool::DataFrame)
         z[:PostGrowth4] = map((x1,x2,x3,x4) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100)*(1+x4/100) -1), z[:FGrowth1], z[:FGrowth2], z[:FGrowth3], z[:FGrowth4])
         z[:PostGrowth5] = map((x1,x2,x3,x4,x5) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100)*(1+x4/100)*(1+x5/100) -1), z[:FGrowth1], z[:FGrowth2], z[:FGrowth3], z[:FGrowth4], z[:FGrowth5])
         z[:PostGrowth6] = map((x1,x2,x3,x4,x5, x6) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100)*(1+x4/100)*(1+x5/100)*(1+x6/100) -1), z[:FGrowth1], z[:FGrowth2], z[:FGrowth3], z[:FGrowth4], z[:FGrowth5], z[:FGrowth6])
-        z[:PostGrowth7] = map((x1,x2,x3,x4,x5, x6, x7) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100)*(1+x4/100)*(1+x5/100)*(1+x6/100)*(1+x7/100) -1), z[:FGrowth1], z[:FGrowth2], z[:FGrowth3], z[:FGrowth4], z[:FGrowth5], z[:FGrowth6], z[:FGrowth7])
+        #z[:PostGrowth7] = map((x1,x2,x3,x4,x5, x6, x7) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100)*(1+x4/100)*(1+x5/100)*(1+x6/100)*(1+x7/100) -1), z[:FGrowth1], z[:FGrowth2], z[:FGrowth3], z[:FGrowth4], z[:FGrowth5], z[:FGrowth6], z[:FGrowth7])
     end
 return TreatPlaceb, SyntheticPlacebos
 end

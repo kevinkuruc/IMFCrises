@@ -12,8 +12,9 @@ using CSV
 #############################################################
 # DEFINE OUTPUT												#
 #############################################################
-bounds = [7; 9; 11; 13; 15; 25]
-Vars   = ["GrowthOnly"; "CAB"; "Infl"; "EXDEBT"]
+bounds = [7; 9; 11; 13; 15; 20]
+#Vars   = ["GrowthOnly"]
+Vars   = ["GrowthOnly"; "CAB"; "Infl"; "EXDEBT"; "None"]
 Variances_2H = zeros(length(Vars), length(bounds))
 Variances_2H = [bounds'; Variances_2H]
 Variances_3H = zeros(length(Vars), length(bounds))
@@ -25,8 +26,8 @@ MatchonOrig = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI, :Ba
 MatchonCAB = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI, :Banking, :Currency, :Debt, :CAB]
 MatchonInfl = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI, :Banking, :Currency, :Debt, :Infl]
 MatchonDebt = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI, :Banking, :Currency, :Debt, :EXDEBT]
-#MatchonNone = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI]
-MetaMatchOn = [MatchonOrig, MatchonCAB, MatchonInfl, MatchonDebt]
+MatchonNone = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI]
+MetaMatchOn = [MatchonOrig, MatchonCAB, MatchonInfl, MatchonDebt, MatchonNone]
 
 #############################################################
 # RUN SYNTHETIC CONTROLS ON UNTREATED						#
@@ -60,27 +61,29 @@ for (k, m) in enumerate(MetaMatchOn)
 		NullErrorsArray			= convert(Array, [NullErrors[:PostError1] NullErrors[:PostError2] NullErrors[:PostError3]]);
 		N 						= size(NullErrorsArray)[1]
 		NullCovariance 			= (1/N)*NullErrorsArray'*NullErrorsArray  #calculate variance by hand assuming mean zero
-		Variances_2H[k+1, j]			= NullCovariance[2,2]
+		Variances_2H[k+1, j]	= NullCovariance[2,2]
 		Variances_3H[k+1,j]		= NullCovariance[3,3]
 		NsPlacebo[k+1, j]		= N
 		println("N is $N")
+		df2 = DataFrame(Runs=Vars)
+		df3 = DataFrame(Runs=Vars)
+		dfN = DataFrame(Runs=Vars)
+		dfs = (df2, df3, dfN)
+		Arrays = (Variances_2H, Variances_3H, NsPlacebo)
+		for (A, D) in zip(Arrays, dfs)
+			D[:Seven] = A[2:end, 1]
+			D[:Nine]  = A[2:end, 2]
+			D[:Eleven]  = A[2:end, 3]
+			D[:Thirteen]  = A[2:end, 4]
+			D[:Fifteen]  = A[2:end, 5]
+			D[:Twenty]  = A[2:end, 6]
+		end
+
+		CSV.write(joinpath(output_directory, "SecondHorizon.csv"), df2)
+		CSV.write(joinpath(output_directory, "TableA3.csv"), df3)
+		CSV.write(joinpath(output_directory, "TableA4.csv"), dfN)
 	end
 end
 
-df2 = DataFrame(Runs=Vars)
-df3 = DataFrame(Runs=Vars)
-dfN = DataFrame(Runs=Vars)
-dfs = (df2, df3, dfN)
-Arrays = (Variances_2H, Variances_3H, NsPlacebo)
-for (A, D) in zip(Arrays, dfs)
-	D[:Seven] = A[2:end, 1]
-	D[:Nine]  = A[2:end, 2]
-	D[:Eleven]  = A[2:end, 3]
-	D[:Thirteen]  = A[2:end, 4]
-	D[:Fifteen]  = A[2:end, 5]
-	D[:TwentyFive]  = A[2:end, 6]
-end
 
-CSV.write(joinpath(output_directory, "TableA3.csv"), df3)
-CSV.write(joinpath(output_directory, "TableA4.csv"), dfN)
 

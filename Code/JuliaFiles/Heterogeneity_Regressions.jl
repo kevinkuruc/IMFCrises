@@ -22,7 +22,7 @@ using GLM
  	lm(@formula(CumulativeEffect ~ 0 + Africa + SA + EAP + ECA + LAC + MidEast), Temp)
 ##Loan Size
 	Temp = dropmissing(TreatedMatched[:, [:Country, :year, :AmountAgreedPercentGDP, :CumulativeEffect]])
-	Temp = Temp[Temp[:,:AmountAgreedPercentGDP].<30, :]
+	#Temp = Temp[Temp[:,:AmountAgreedPercentGDP].<30, :] #This completely drives any effect
 		n = size(Temp)[1]
 		println("N is $n")
 	lm(@formula(CumulativeEffect ~ AmountAgreedPercentGDP), Temp)

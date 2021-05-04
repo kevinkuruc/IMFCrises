@@ -42,7 +42,7 @@ controlred = :red
 #############################################################
 
 ## LOAD IN ALL IMF LOAN DATA (GROWTH RATES CENTERED AROUND LOAN)
-Loans = CSV.read(joinpath(data_directory, "created", "Loans.csv"))
+Loans = CSV.read(joinpath(data_directory, "created", "Loans.csv"), DataFrame)
 Loans = Loans[Loans[:year].>1969,:]
 Loans = Loans[Loans[:year].<2012,:]
 #Plot time series of loans vs stabilization loans 
@@ -100,7 +100,7 @@ savefig(joinpath(output_directory, "SummaryPath.pdf"))
 
 #------- FIGURE 2: Financial Crisis (a) & Split to With/Without (b) -------------------------  #
 
-AllData					= CSV.read(joinpath(data_directory, "created", "MasterData.csv"))
+AllData					= CSV.read(joinpath(data_directory, "created", "MasterData.csv"), DataFrame)
 NAllCrises 				= size(AllData)[1]
 #println("Number of total crises for path is $NAllCrises")
 		for z in (:Banking, :Currency, :Debt)

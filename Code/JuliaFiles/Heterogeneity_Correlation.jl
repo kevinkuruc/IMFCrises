@@ -1,4 +1,6 @@
 function HeterogeneityScatter(s::Symbol)
+	Temp = DataFrame()
+	Temp2 = DataFrame()
 	if s != :year
 	Temp = dropmissing(TreatedMatched[:, [:Country, :year, s, :CumulativeEffect]])
 	else 
@@ -29,7 +31,7 @@ function HeterogeneityScatter(s::Symbol)
 	else
 		xlab= "Size of Loan (as % GDP)"
 	end
-	scatter(Temp[s], Temp[:CumulativeEffect], label="", ylabel="Estimated Cumulative Effect", grid=false, xlabel=xlab, markersize=[1], marker=:x, ylims=(-100,200))
+	scatter(Temp[s], Temp[:CumulativeEffect], label="", ylabel="Estimated Cumulative Effect", grid=false, xlabel=xlab, marker=:x, markercolor=:gray, ylims=(-100,200),  markersize=2)
 	plot!(x, yhat, label="", linecolor=treatedblue, linestyle=:solid, linewidth=[1.7])
 	if s ==:AmountAgreedPercentGDP
 	plot!(x2, yhat2, label="Without Outlier", linecolor=:gray, linestyle=:solid, linewidth=[1.7], xlims=(0, 15))

@@ -84,7 +84,7 @@ forvalues j = 1/5{
 gen LGrowth`j' = L`j'.DWDI
 }
 
-forvalues j = 1/7{
+forvalues j = 1/6{
 gen FGrowth`j' = F`j'.DWDI
 }
 
@@ -98,9 +98,9 @@ gen FGrowth`j' = F`j'.DWDI
 preserve
 keep if Type!=""
 keep L* F* DWDI Country year AmountAgreedPercentGDP Shortterm simple_conditions CAB EXDEBT Infl
-summ AmountAgreedPercentGDP if Shortterm==1 & year>1969 & year<2012, detail
-summ DWDI if Shortterm==1 & year>1969 & year<2012, detail
-summ simple_conditions if Shortterm==1 & year>1969 & year<2012, detail
+summ AmountAgreedPercentGDP if Shortterm==1 & year>1969 & year<2014, detail
+summ DWDI if Shortterm==1 & year>1969 & year<2014, detail
+summ simple_conditions if Shortterm==1 & year>1969 & year<2014, detail
 export delimited "Data\created\Loans.csv", replace
 restore
 
@@ -129,15 +129,17 @@ recode control (1=.) if Type[_n-`b']!="" & yearend[_n-`b'] >= year & year[_n-`b'
 ***Putting IMFamount in to the treated year
 sort Country_num year
 replace AmountAgreedPercentGDP = F1.AmountAgreedPercentGDP if AmountAgreedPercentGDP==. & treat==1
+replace AmountDrawnPercentAgreed = F1.AmountDrawnPercentAgreed if AmountDrawnPercentAgreed==. & treat==1
+replace AmountDrawn = F1.AmountDrawn if AmountDrawn==. & treat==1
 replace Type = Type[_n+1] if treat==1 & Type==""
 
 *drop if Country=="Equatorial Guinea" & year==1994 //BIG OUTLIER, LEAVE IN AS DEFAULT BUT CHECK WITHOUT
 #delimit ;
 local ForJulia Country Country_code year IMF advecon Banking Currency Debt LGrowth5 LGrowth4 LGrowth3 LGrowth2 LGrowth1
-DWDI FGrowth1 FGrowth2 FGrowth3 FGrowth4 FGrowth5 FGrowth6 FGrowth7 Region WGI conditions AmountAgreedPercentGDP
+DWDI FGrowth1 FGrowth2 FGrowth3 FGrowth4 FGrowth5 FGrowth6 Region WGI conditions AmountAgreedPercentGDP AmountDrawnPercentAgreed AmountDrawn
 EXDEBT CAB Infl GDPRank pop Gshare rgdpe;
 #delimit cr
-preserve 
+*preserve 
 keep if treat==1 | control==1
 count if treat==1 
 count if control==1
@@ -145,6 +147,7 @@ summ AmountAgreedPercentGDP if treat==1, detail
 keep `ForJulia'
 save "Data\created\MasterData.dta", replace
 export delimited using "Data\created\MasterData.csv", replace
+tab year
 forvalues h = 1/6{
 reg FGrowth`h' IMF Banking Currency Debt DWDI LGrowth* if FGrowth6!=.
 }
@@ -155,7 +158,7 @@ forvalues j = 1/5{
 replace LGrowth`j' = L`j'.DPWT
 }
 
-forvalues j = 1/7{
+forvalues j = 1/6{
 replace FGrowth`j' = F`j'.DPWT
 }
 
@@ -166,7 +169,7 @@ count if control==1
 summ AmountAgreedPercentGDP if treat==1, detail
 #delimit ;
 local ForJulia Country Country_code year IMF advecon Banking Currency Debt LGrowth5 LGrowth4 LGrowth3 LGrowth2 LGrowth1
-DPWT FGrowth1 FGrowth2 FGrowth3 FGrowth4 FGrowth5 FGrowth6 FGrowth7 Region WGI conditions AmountAgreedPercentGDP
+DPWT FGrowth1 FGrowth2 FGrowth3 FGrowth4 FGrowth5 FGrowth6 Region WGI conditions AmountAgreedPercentGDP
 EXDEBT CAB Infl GDPRank pop Gshare rgdpe;
 #delimit cr
 keep `ForJulia'

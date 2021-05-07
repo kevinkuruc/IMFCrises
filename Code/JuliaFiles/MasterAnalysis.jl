@@ -44,10 +44,10 @@ controlred = :red
 ## LOAD IN ALL IMF LOAN DATA (GROWTH RATES CENTERED AROUND LOAN)
 Loans = CSV.read(joinpath(data_directory, "created", "Loans.csv"), DataFrame)
 Loans = Loans[Loans[:year].>1969,:]
-Loans = Loans[Loans[:year].<2012,:]
+Loans = Loans[Loans[:year].<2014,:]
 #Plot time series of loans vs stabilization loans 
 Stabilization_Loans = Loans[Loans[:Shortterm].==1, :]
-time_series_years = collect(1970:1:2011)
+time_series_years = collect(1970:1:2013)
 Loan_Count = zeros(length(time_series_years),2)
 for year = 1:size(Loan_Count)[1]
     Loan_Count[year, 1] = size(Loans[Loans[:year].==1969+year,:])[1]
@@ -268,7 +268,7 @@ println("P value for Hotelling T-sq is $PVal")
 
 #------ FIGURE 4 -------------------------------------------------------------#
 plot(collect(0:1:Plot_length), [0; MainBetas[1:Plot_length,1]], linewidth=2.5, grid=false, color=treatedblue, label="", ylabel="Increase in Output (%)", xlabel="Years From Crisis", marker=([:circle], [treatedblue], [2.5]))
-plot!(collect(0:1:Plot_length), [[0; MainBetas[1:Plot_length,2]] [0; MainBetas[1:Plot_length,3]]], color=:black, linestyle = :dot, label=["1 s.e." ""], legend=:bottomleft, ylims=(-3, 4.75))
+plot!(collect(0:1:Plot_length), [[0; MainBetas[1:Plot_length,2]] [0; MainBetas[1:Plot_length,3]]], color=:black, linestyle = :dot, label=["1 s.e." ""], legend=:bottomleft, ylims=(-3, 4.25))
 hline!([0], color=:black, style=:dot, label="")
 savefig(joinpath(output_directory, "MainIRF.pdf"))
 

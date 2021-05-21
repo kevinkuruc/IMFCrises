@@ -17,6 +17,7 @@ do "Code\DoFiles\ValenciaLaeven_CleanCompile.do"
 do "Code\DoFiles\LendingData_CleanCompile.do"
 do "Code\DoFiles\Governance_CleanCompile.do"
 do "Code\DoFiles\Conditions_CleanCompile.do"
+do "Code\DoFiles\DebtCrises_Trebesch_CleanCompile.do"
 
 *Merge here to use
 use "Data\created\StandardAggregates.dta"
@@ -28,6 +29,12 @@ drop _merge
 count if Banking==1
 count if Currency==1
 count if Debt==1
+
+merge m:1 Country_code year using "Data\created\Default_Details.dta"
+drop if _merge==2
+drop _merge
+
+replace default_length = default_length[_n-1] if Debt==1 & default_length==.
 
 merge m:1 Country using "Data\original\Regions.dta" //entered by hand from https://datahelpdesk.worldbank.org/knowledgebase/articles/906519-world-bank-country-and-lending-groups
 replace Region="Africa" if Region=="SSA"
@@ -137,10 +144,10 @@ replace Type = Type[_n+1] if treat==1 & Type==""
 #delimit ;
 local ForJulia Country Country_code year IMF advecon Banking Currency Debt LGrowth5 LGrowth4 LGrowth3 LGrowth2 LGrowth1
 DWDI FGrowth1 FGrowth2 FGrowth3 FGrowth4 FGrowth5 FGrowth6 Region WGI 
-conditions quant_conditions structural_conditions AmountAgreedPercentGDP AmountDrawnPercentAgreed AmountDrawn
+conditions quant_conditions structural_conditions AmountAgreedPercentGDP AmountDrawnPercentAgreed AmountDrawn default_length
 EXDEBT CAB Infl GDPRank pop Gshare rgdpe;
 #delimit cr
-preserve 
+*preserve 
 keep if treat==1 | control==1
 count if treat==1 
 count if control==1

@@ -280,7 +280,7 @@ vline!([0], color=:black, style=:dot, label="")
 savefig(joinpath(output_directory, "MainDensity.pdf"))
 
 # -------- Cumulative Effect Size By Treated (Integral of IRF) ------- #
-TreatedMatched[:CumulativeEffect] = map((x1,x2,x3,x4,x5, x6) -> +(x1, x2, x3, x4, x5, x6), MainDiffDataFrame[:LevelDiff1], MainDiffDataFrame[:LevelDiff2], MainDiffDataFrame[:LevelDiff3], MainDiffDataFrame[:LevelDiff4], MainDiffDataFrame[:LevelDiff5], MainDiffDataFrame[:LevelDiff6])
+TreatedMatched[:CumulativeEffect] = map((x1,x2,x3,x4,x5) -> +(x1, x2, x3, x4, x5), MainDiffDataFrame[:LevelDiff1], MainDiffDataFrame[:LevelDiff2], MainDiffDataFrame[:LevelDiff3], MainDiffDataFrame[:LevelDiff4], MainDiffDataFrame[:LevelDiff5])#, MainDiffDataFrame[:LevelDiff6])
 MainMean = mean(TreatedMatched[:CumulativeEffect])
 println("Average Cumulative Effect is $MainMean")
 IMF_Multiplier = MainMean/AvgLoanSize_Matched
@@ -293,6 +293,9 @@ HeterogeneityScatter(:WGI)
 HeterogeneityScatter(:year)
 HeterogeneityScatter(:conditions)
 HeterogeneityScatter(:AmountAgreedPercentGDP)
+HeterogeneityScatter(:AmountDrawnPercentAgreed)
+HeterogeneityScatter(:quant_conditions)
+HeterogeneityScatter(:structural_conditions)
 #---- TABLE A6 ------------------------------------------------ #
 include(joinpath(code_directory, "Heterogeneity_Regressions.jl"))
 

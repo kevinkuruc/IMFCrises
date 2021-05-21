@@ -1,6 +1,7 @@
 # Runs a new synthetic control for each horizon, in order to leverage more data at earlier horizons.
 # For example: in main run, crises in 2016 won't be used for horizons 1,2,3 even though the data is available because
 # their full set of post-crisis growth rates is not complete. Here they are used because they're estimated separately.
+function New_Sample_Each_Horizon()
 bounds  = [B, B, B, B, B, B, .5, .5, .5]
 W       = ones(10,1)
 matchon = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI, :Banking, :Currency, :Debt]
@@ -56,4 +57,5 @@ horizons[4] = mean(convert(Array, Treated_F3[:PostGrowth3]-Synthetics_F3[:PostGr
 horizons[5] = mean(convert(Array, Treated_F4[:PostGrowth4]-Synthetics_F4[:PostGrowth4]))
 horizons[6] = mean(convert(Array, Treated_F5[:PostGrowth5]-Synthetics_F5[:PostGrowth5]))
 horizons[7] = mean(convert(Array, Treated_F6[:PostGrowth6]-Synthetics_F6[:PostGrowth6]))
-horizons
+return horizons
+end

@@ -1,5 +1,6 @@
-RobustnessChecks = ["CAB" "Infl" "Debt" "TightBounds"  "WideBounds" "FreeForAll" "NoAdv" "GoodMatches" "LP" "PWT" "13Bounds" "15Bounds" "20Bounds"]
-Z = zeros(size(predict)[1]+1,length(RobustnessChecks))
+include("New_Sample_Each_Horizon.jl")
+RobustnessChecks = ["CAB" "Infl" "Debt" "TightBounds"  "WideBounds" "FreeForAll" "NoAdv" "GoodMatches" "LP" "NonConstantSample" "PWT" "13Bounds" "15Bounds" "20Bounds"]
+Z = zeros(size(predict, 1)+1,length(RobustnessChecks))
 RobustnessChecks = [RobustnessChecks; Z]
 
 # --- Need Growth Variance First ---#
@@ -117,8 +118,11 @@ push!(LP_coefs, coef(output)[2])
 output = lm(@formula(FGrowth6 ~ IMF + DWDI + LGrowth1 + LGrowth2 + LGrowth3 + LGrowth4 + LGrowth5 + Banking + Currency + Debt), TempLP_Data)
 push!(LP_coefs, coef(output)[2])
 
+#---Non Constant Sample--#
+RobustnessChecks[2:end,10] = New_Sample_Each_Horizon()
+
 #---USING PENN WORLD TABLES INSTEAD OF WDI ---- #
-AllData_PWT                       = CSV.read(joinpath(data_directory, "created", "MasterData_PWT.csv"))
+AllData_PWT                       = CSV.read(joinpath(data_directory, "created", "MasterData_PWT.csv"), DataFrame)
             for z in (:Banking, :Currency, :Debt)
                   AllData_PWT[z] = AllData_PWT[z]*.5*2
             end
@@ -164,14 +168,15 @@ for (h, pg) in enumerate(PostGrowths)
       else
       RobustnessChecks[h+2,9] = 100*((1+RobustnessChecks[h+1,9]/100)*(1+LP_coefs[h+1]/100)-1)
       end
+      #Non constant sample done above
       TempDiff = convert(Array, Treated_PWT[pg]-Synthetics_PWT[pg])
-      RobustnessChecks[h+2,10] = mean(TempDiff)
-      TempDiff = convert(Array, Treated_WideBounds2[pg]-Synthetics_WideBounds2[pg])
       RobustnessChecks[h+2,11] = mean(TempDiff)
-      TempDiff = convert(Array, Treated_WideBounds3[pg]-Synthetics_WideBounds3[pg])
+      TempDiff = convert(Array, Treated_WideBounds2[pg]-Synthetics_WideBounds2[pg])
       RobustnessChecks[h+2,12] = mean(TempDiff)
+      TempDiff = convert(Array, Treated_WideBounds3[pg]-Synthetics_WideBounds3[pg])
+      RobustnessChecks[h+2,13] = mean(TempDiff)
       TempDiff = convert(Array, Treated_WideBounds4[pg]-Synthetics_WideBounds4[pg])
-      RobustnessChecks[h+2,13] = mean(TempDiff)  
+      RobustnessChecks[h+2,14] = mean(TempDiff)  
       #TempDiff = convert(Array, Treated_NoBounds[pg]-Synthetics_NoBounds[pg])
       #RobustnessChecks[h+2,13] = mean(TempDiff)    
 end

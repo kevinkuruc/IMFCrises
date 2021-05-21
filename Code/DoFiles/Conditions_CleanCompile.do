@@ -8,16 +8,22 @@ rename ccode Country_code
 
 rename BA3TOT conditions //weighted average of soft-hard conditions (all categtories)
 rename BA1TOT simple_conditions
-keep Country Country_code year conditions simple_conditions
+rename QCsTOT quant_conditions
+rename SCsTOT structural_conditions //simple averages
+keep Country Country_code year conditions simple_conditions quant_conditions structural_conditions
 egen id = group(Country_code)
 xtset id year
-gen conditions2 = conditions if conditions>F1.conditions
-replace conditions2 = F1.conditions if F1.conditions>=conditions
-gen simple_conditions2 = simple_conditions if simple_conditions>F1.simple_conditions
-replace simple_conditions2 = F1.simple_conditions if F1.simple_conditions>=simple_conditions
-drop conditions simple_conditions
-rename conditions2 conditions
-rename simple_conditions2 simple_conditions
+local conditionvars conditions simple_conditions quant_conditions structural_conditions
+foreach c in `conditionvars'{
+	replace `c' = F1.`c' if F1.`c' > `c'
+}
+*gen conditions2 = conditions if conditions>F1.conditions
+*replace conditions2 = F1.conditions if F1.conditions>=conditions
+*gen simple_conditions2 = simple_conditions if simple_conditions>F1.simple_conditions
+*replace simple_conditions2 = F1.simple_conditions if F1.simple_conditions>=simple_conditions
+*drop conditions simple_conditions
+*rename conditions2 conditions
+*rename simple_conditions2 simple_conditions
 replace Country_code = "AND" if Country_code=="ADO"
 replace Country_code = "COD" if Country_code=="ZAR"
 replace Country_code = "UVK" if Country_code=="KSV"

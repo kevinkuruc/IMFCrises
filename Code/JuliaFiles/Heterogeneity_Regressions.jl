@@ -26,11 +26,18 @@ using GLM
 		n = size(Temp)[1]
 		println("N is $n")
 	lm(@formula(CumulativeEffect ~ AmountAgreedPercentGDP), Temp)
+##Amount Drawn Size
+	Temp = dropmissing(TreatedMatched[:, [:Country, :year, :AmountDrawnPercentAgreed, :CumulativeEffect]])
+	Temp = Temp[Temp[:,:AmountDrawnPercentAgreed].>0,:]
+	n = size(Temp, 1)
+	println("N is $n")
+	lm(@formula(CumulativeEffect ~ AmountDrawnPercentAgreed), Temp)
 ##Conditions
-	Temp = dropmissing(TreatedMatched[:, [:Country, :year, :conditions, :CumulativeEffect]])
+	Temp = dropmissing(TreatedMatched[:, [:Country, :year, :conditions, :quant_conditions, :structural_conditions, :CumulativeEffect]])
 			n = size(Temp)[1]
 		println("N is $n")
 	lm(@formula(CumulativeEffect ~ conditions), Temp)
+	lm(@formula(CumulativeEffect ~ quant_conditions + structural_conditions), Temp)
 ##Governance
 	Temp = dropmissing(TreatedMatched[:, [:Country, :year, :WGI, :CumulativeEffect]])
 				n = size(Temp)[1]

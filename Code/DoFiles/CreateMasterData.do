@@ -136,10 +136,11 @@ replace Type = Type[_n+1] if treat==1 & Type==""
 *drop if Country=="Equatorial Guinea" & year==1994 //BIG OUTLIER, LEAVE IN AS DEFAULT BUT CHECK WITHOUT
 #delimit ;
 local ForJulia Country Country_code year IMF advecon Banking Currency Debt LGrowth5 LGrowth4 LGrowth3 LGrowth2 LGrowth1
-DWDI FGrowth1 FGrowth2 FGrowth3 FGrowth4 FGrowth5 FGrowth6 Region WGI conditions AmountAgreedPercentGDP AmountDrawnPercentAgreed AmountDrawn
+DWDI FGrowth1 FGrowth2 FGrowth3 FGrowth4 FGrowth5 FGrowth6 Region WGI 
+conditions quant_conditions structural_conditions AmountAgreedPercentGDP AmountDrawnPercentAgreed AmountDrawn
 EXDEBT CAB Infl GDPRank pop Gshare rgdpe;
 #delimit cr
-*preserve 
+preserve 
 keep if treat==1 | control==1
 count if treat==1 
 count if control==1

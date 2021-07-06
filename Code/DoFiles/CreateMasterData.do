@@ -34,8 +34,10 @@ merge m:1 Country_code year using "Data\created\Default_Details.dta"
 drop if _merge==2
 drop _merge
 
+* Trebesh dataset has slightly different start dates for these events. Grab lengths from year before & after
 replace default_length = default_length[_n-1] if Debt==1 & default_length==.
-
+replace default_length = default_length[_n+1] if Debt==1 & default_length==.
+ 
 merge m:1 Country using "Data\original\Regions.dta" //entered by hand from https://datahelpdesk.worldbank.org/knowledgebase/articles/906519-world-bank-country-and-lending-groups
 replace Region="Africa" if Region=="SSA"
 drop if _merge!=3
@@ -147,7 +149,7 @@ DWDI FGrowth1 FGrowth2 FGrowth3 FGrowth4 FGrowth5 FGrowth6 Region WGI
 conditions quant_conditions structural_conditions AmountAgreedPercentGDP AmountDrawnPercentAgreed AmountDrawn default_length
 EXDEBT CAB Infl GDPRank pop Gshare rgdpe;
 #delimit cr
-*preserve 
+preserve 
 keep if treat==1 | control==1
 count if treat==1 
 count if control==1

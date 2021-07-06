@@ -199,7 +199,11 @@ TreatedMatched[:Matched] = 1
 IMFCrisesForTable = join(IMFCrises, TreatedMatched, on=[:Country, :year], kind=:outer, makeunique=true)
 ForAvgSize        = dropmissing(IMFCrisesForTable[:,[:Matched, :AmountAgreedPercentGDP]])
 AvgLoanSize_Matched = mean(ForAvgSize[ForAvgSize[:Matched].==1, :AmountAgreedPercentGDP])
+ForAvg_DebtLength = dropmissing(IMFCrisesForTable[:, [:Country, :year, :Debt, :Matched, :default_length]])
+ForAvg_DebtLength = ForAvg_DebtLength[ForAvg_DebtLength[:Debt].==1, :]
+AvgDebtLength_Matched = mean(ForAvg_DebtLength[ForAvg_DebtLength[:Matched].==1, :default_length])
 println("Avg Loan Size for Matched Obs: $AvgLoanSize_Matched")
+println("Avg Debt Crisis Length for Matched Obs: $AvgDebtLength_Matched")
 completecheck = [growths; :Country; :year; :Banking; :Currency; :Debt; :Matched]
 IMFCrisesForTable = IMFCrisesForTable[:, completecheck]
 IMFCrisesForTable[:Matched] = coalesce.(IMFCrisesForTable[:,:Matched], 0)
@@ -208,6 +212,11 @@ IMFCrisesForTable = IMFCrisesForTable[:, [:Country, :year, :Banking, :Currency, 
 CSV.write(joinpath(output_directory, "TableA1.csv"), IMFCrisesForTable)
 
 NoIMFCrisesForTable = join(NoIMFCrises, DonorWeights, on=[:Country, :year], kind=:outer, makeunique=true)
+#--Check for Length of Debt Crises Here; required before things are dropped because some have missing values--#
+ForAvg_DebtLength_Controls = dropmissing(NoIMFCrisesForTable[:, [:Country, :year, :Debt, :TotalWeight, :default_length]])
+ForAvg_DebtLength_Controls = ForAvg_DebtLength_Controls[ForAvg_DebtLength_Controls[:Debt].==1, :]
+AvgDebtLength_Controls 	   = sum(ForAvg_DebtLength_Controls[:default_length].*ForAvg_DebtLength_Controls[:TotalWeight])/sum(ForAvg_DebtLength_Controls[:TotalWeight])
+println("Avg Debt Crisis Length for Control Obs: $AvgDebtLength_Controls")
 completecheck = [completecheck; :TotalWeight]
 NoIMFCrisesForTable = NoIMFCrisesForTable[:, completecheck]
 dropmissing!(NoIMFCrisesForTable)

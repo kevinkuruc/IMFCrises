@@ -1,12 +1,13 @@
 
 ******MAKE WDI DATASET**********
-local WDIs GDP ODA CAB Infl EXDEBT NGDPUSD
+local WDIs GDP ODA CAB Infl EXDEBT NGDPUSD GDPCAP
 foreach v in `WDIs'{
 import excel using "Data\\original\\`v'WDI.xls", clear firstrow
 rename CountryCode Country_code
 rename CountryName Country 
 drop IndicatorCode
 reshape long `v', i(Country) j(year)
+drop if year==2020
 tempfile temp`v'
 save "`temp`v''"
 }
@@ -25,7 +26,7 @@ tempfile tempPWT
 save `tempPWT'
 
 use "`tempGDP'", clear
-local lessWDI ODA CAB Infl EXDEBT NGDPUSD
+local lessWDI ODA CAB Infl EXDEBT NGDPUSD GDPCAP
 foreach vv in `lessWDI'{
 merge 1:1 Country_code year using "`temp`vv''", keepusing(`vv')
 drop _merge
@@ -46,6 +47,7 @@ label var ODA "(Current) Billions of USD"
 label var CAB "Current Account Balance (% GDP)"
 label var EXDEBT "External Debt (% GNI)"
 label var Infl "% change CPI"
+label var GDPCAP "Constant 2010 USD (WDI)"
 
 replace Country_code= "WBG" if Country_code=="PSE"
 replace Country_code="UVK" if Country_code=="XKX"

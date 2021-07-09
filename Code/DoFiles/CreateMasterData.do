@@ -186,3 +186,25 @@ keep `ForJulia'
 save "Data\created\MasterData_PWT.dta", replace
 export delimited using "Data\created\MasterData_PWT.csv", replace
 restore 
+
+*** Now for Levels iteration of the data
+forvalues j = 1/5{
+	gen LLevels`j' = L`j'.GDPCAP
+}
+
+forvalues j = 1/6{
+	gen FLevels`j' = F`j'.GDPCAP
+}
+
+preserve 
+keep if treat==1 | control==1
+count if treat==1 
+count if control==1
+#delimit ;
+local ForJulia Country Country_code year IMF advecon Banking Currency Debt LLevels5 LLevels4 LLevels3 LLevels2 LLevels1
+GDPCAP FLevels1 FLevels2 FLevels3 FLevels4 FLevels5 FLevels6;
+#delimit cr
+keep `ForJulia'
+save "Data\created\MasterData_Levels.dta", replace
+export delimited using "Data\created\MasterData_Levels.csv", replace
+restore 

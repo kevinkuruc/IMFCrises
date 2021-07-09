@@ -317,5 +317,8 @@ include(joinpath(code_directory, "Heterogeneity_Regressions.jl"))
 #Takes a long time to run, only uncomment to replicate that particular Table
 #include(joinpath(code_directory, "PlaceboComparisonTable.jl"))
 
+# ------- Levels Appendix ------------------------------------- #
+#include(joinpath(code_directory, "Levels_Appendix.jl"))
+
 
 

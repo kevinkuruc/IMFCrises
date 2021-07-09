@@ -104,6 +104,7 @@ function GenSynthetics(Treated::DataFrame, Pool::DataFrame, matchon::Array{Symbo
 
 			initguess = 1/q * ones(q)
 			(sol, weight, ret) = optimize(opt, initguess);
+			println("Finished $country")
 			# ---- Now plug solution into output dataframes ------ #
 			if sol < matchtol
 			RelevantPoolData = LocalPool[:, [matchon; predict]]

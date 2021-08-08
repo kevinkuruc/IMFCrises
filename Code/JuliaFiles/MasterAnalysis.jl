@@ -53,13 +53,20 @@ for year = 1:size(Loan_Count)[1]
     Loan_Count[year, 1] = size(Loans[Loans[:year].==1969+year,:])[1]
     Loan_Count[year, 2] = size(Stabilization_Loans[Stabilization_Loans[:year].==1969+year,:])[1]
 end
-plot(time_series_years, Loan_Count, label="", ylabel="Newly Originated IMF Arrangements", xlabel="", linecolor=[:gray treatedblue], linestyle=[:dash :solid], linewidth=[2 2], grid=false)
+plot(time_series_years, Loan_Count, label="", ylabel="Newly Originated IMF Programs", xlabel="", linecolor=[:gray treatedblue], linestyle=[:dash :solid], linewidth=[2 2], grid=false)
 annotate!([(1996.6, 27, text("All \n Loans", 10, :gray, :left))])
 annotate!([(1995.9, 15.15, text("Stabilization \n Loans", 10, treatedblue, :left))])
 savefig(joinpath(output_directory, "TimeSeries.pdf"))
+average_all_loans = mean(Loan_Count[:,1])
+println("Average Number of IMF programs is $average_all_loans.")
+average_all_size = mean(dropmissing(Loans[:,[:AmountAgreedPercentGDP]])[:AmountAgreedPercentGDP])
+println("Average Size of all IMF programs is $average_all_size.")
 #Summary Stats Table
+#--Number of non-complete programs--#
+Less_than_Full_drawdown = size(Stabilization_Loans[Stabilization_Loans[:AmountDrawnPercentAgreed].<1, :],1)/size(Stabilization_Loans, 1)
+println("$Less_than_Full_drawdown of loans withdraw the full amount.")
 SummaryVars = [:AmountAgreedPercentGDP, :simple_conditions, :DWDI, :Infl,  :CAB, :EXDEBT]
-SummaryStats = DataFrame(Varname = [:DWDI], Mean = [10.2], Median = [6.1], StdDev = [6.3], N = [10]) #random numbers to start table, deleted next line
+SummaryStats = DataFrame(Varname = [:DWDI], Mean = [10.2], Median = [6.1], StdDev = [6.3], N = [10]) #random numbers to initialize table, deleted next line
 deleterows!(SummaryStats, 1)
   for (i,s) in enumerate(SummaryVars)
     temp_df = Stabilization_Loans[:,[:year, s]]
@@ -309,7 +316,7 @@ HeterogeneityScatter(:structural_conditions)
 include(joinpath(code_directory, "Heterogeneity_Regressions.jl"))
 
 # ------- ROBUSTNESS (BOTH FIGURE 4 & APPENDIX) -------------- #
-#include(joinpath(code_directory, "RobustnessRuns.jl"))
+include(joinpath(code_directory, "RobustnessRuns.jl"))
 
 # ------- TABLE 1 (AND A5) ARE MADE IN STATA [SEE "ForecastRegressoins_Table1.do"] -----------------------# 
 

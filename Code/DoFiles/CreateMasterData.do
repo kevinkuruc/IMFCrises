@@ -26,9 +26,10 @@ drop if _merge==2
 drop _merge
 
 **Count Crises for Section 1 Summary Stat
-count if Banking==1
-count if Currency==1
-count if Debt==1
+count if Banking==1 & Currency==0 & Debt==0 & year>1969 & year<2014
+count if Banking==0 & Currency==1 & Debt==0 & year>1969 & year<2014
+count if Banking==0 & Currency==0 & Debt==1 & year>1969 & year<2014
+count if Banking+Currency+Debt>1 & Banking+Currency+Debt!=. & year>1969 & year<2014
 
 merge m:1 Country_code year using "Data\created\Default_Details.dta"
 drop if _merge==2
@@ -106,7 +107,7 @@ gen FGrowth`j' = F`j'.DWDI
 ******************
 preserve
 keep if Type!=""
-keep L* F* DWDI Country year AmountAgreedPercentGDP Shortterm simple_conditions CAB EXDEBT Infl
+keep L* F* DWDI Country year AmountAgreedPercentGDP AmountDrawnPercentAgreed Shortterm simple_conditions CAB EXDEBT Infl
 summ AmountAgreedPercentGDP if Shortterm==1 & year>1969 & year<2014, detail
 summ DWDI if Shortterm==1 & year>1969 & year<2014, detail
 summ simple_conditions if Shortterm==1 & year>1969 & year<2014, detail
@@ -158,6 +159,18 @@ keep `ForJulia'
 save "Data\created\MasterData.dta", replace
 export delimited using "Data\created\MasterData.csv", replace
 tab year
+*Counting Banking Currency and Debt in Main Data
+# delimit ;
+count if 	Banking ==1 & Currency==0 & Debt==0 & DWDI!=. & FGrowth1!=. & FGrowth2!=. & FGrowth3!=. & FGrowth4!=. & FGrowth5!=. & FGrowth6!=. &
+			LGrowth1!=. &  LGrowth2!=. & LGrowth3!=. & LGrowth4!=. & LGrowth5!=.;
+count if 	Banking ==0 & Currency==1 & Debt==0 & DWDI!=. & FGrowth1!=. &  FGrowth2!=. & FGrowth3!=. & FGrowth4!=. & FGrowth5!=. & FGrowth6!=. &
+			LGrowth1!=. &  LGrowth2!=. & LGrowth3!=. & LGrowth4!=. & LGrowth5!=.; 
+count if 	Banking ==0 & Currency==0 & Debt==1 & DWDI!=. & FGrowth1!=. &  FGrowth2!=. & FGrowth3!=. & FGrowth4!=. & FGrowth5!=. & FGrowth6!=. &
+			LGrowth1!=. &  LGrowth2!=. & LGrowth3!=. & LGrowth4!=. & LGrowth5!=.;
+count if 	Banking + Currency + Debt > 1 & DWDI!=. & FGrowth1!=. &  FGrowth2!=. & FGrowth3!=. & FGrowth4!=. & FGrowth5!=. & FGrowth6!=. &
+			LGrowth1!=. &  LGrowth2!=. & LGrowth3!=. & LGrowth4!=. & LGrowth5!=.;
+#delimit cr
+*Verifying that the local projection in Julia is working correctly
 forvalues h = 1/6{
 reg FGrowth`h' IMF Banking Currency Debt DWDI LGrowth* if FGrowth6!=.
 }

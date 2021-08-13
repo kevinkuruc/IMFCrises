@@ -23,13 +23,17 @@ end
 NullErrorsArray_Levels			= convert(Array, [NullErrors_Levels[:PostError1] NullErrors_Levels[:PostError2] NullErrors_Levels[:PostError3] NullErrors_Levels[:PostError4] NullErrors_Levels[:PostError5] NullErrors_Levels[:PostError6]])# NullErrors[:PostError7]])
 
 NullCovariance_Levels 			= (1/size(NullErrorsArray_Levels)[1])*NullErrorsArray_Levels'*NullErrorsArray_Levels  #calculate variance by hand assuming mean zero
-Horizon_2_Level_error			= NullCovariance_Levels[2,2]
-Horizon_2_growth_error 			= NullCovariance[2,2]
-println("Horizon 2 Forecast Variance = $Horizon_2_Level_error")
-println("This is compared to growth rates value of $Horizon_2_growth_error")
+Horizon_3_Level_error           = NullCovariance_Levels[3,3]
+Horizon_3_growth_error          = NullCovariance[3,3]
+println("Horizon 3 Forecast Variance = $Horizon_3_Level_error")
+println("This is compared to growth rates value of $Horizon_3_growth_error")
+N_levels = size(Placebos_Levels, 1)
+println("This matchtol generates $N_levels values; as opposed to 78 for main specification.")
 
 #Run Levels Analysis
-(Treated_Levels, Synthetics_Levels, Weights_Levels) = GenSynthetics(IMFCrises_Levels, NoIMFCrises_Levels, matchon, predict, localtol=bounds, matchtol=500000, matchweights=W)
+(Treated_Levels, Synthetics_Levels, Weights_Levels) = GenSynthetics(IMFCrises_Levels, NoIMFCrises_Levels, matchon, predict, localtol=bounds, matchtol=3000000, matchweights=W)
+
+t = collect(-5:1:6)
 
 Levels_Outcomes = zeros(length(t), 2)
 z = (Treated_Levels, Synthetics_Levels)
@@ -51,4 +55,4 @@ end
 plot(collect(-5:1:6), Levels_Outcomes, label=["Treated" "Synthetics"], linecolor=[treatedblue controlred], linestyle=[:solid :dash], legend=:topleft, linewidth=[2.5 2],
     xticks=(collect(-5:1:6)), grid=false, ylabel="GDP per capita (2011 USD)")
 vline!([0], linestyle=:dashdot, linewidth=.75, color=:black, label="")
-savefig(joinpath(output_directory, "Level_Analysis.pdf"))
+savefig(joinpath(output_directory, "Level_Analysis_3Mill.pdf"))

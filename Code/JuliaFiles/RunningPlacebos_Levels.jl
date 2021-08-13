@@ -36,7 +36,7 @@ function RunningPlacebos_Levels(matchon, W, bounds, predict, Pool::DataFrame)
         placebo = Pool[Pool[:i].==j, relevant] 
         if size(placebo)[1]>0
             dropplaceb              = Pool[Pool[:i].!=j, relevant]
-            (Placebt, Placebj, w)   = GenSynthetics(placebo, dropplaceb, matchon, predict, localtol= bounds, matchtol=500000, matchweights=W)
+            (Placebt, Placebj, w)   = GenSynthetics(placebo, dropplaceb, matchon, predict, localtol= bounds, matchtol=3000000, matchweights=W)
             Placebt[:SqError]       = 0.
             if size(Placebj)[1]>0  #Push if non-empty synthetic generated
             push!(SyntheticPlacebos, Placebj[1,:])

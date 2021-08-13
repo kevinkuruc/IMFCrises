@@ -98,7 +98,7 @@ function GenSynthetics(Treated::DataFrame, Pool::DataFrame, matchon::Array{Symbo
 			equality_constraint!(opt, (x, grad) -> sumone(x), 1e-10)
 			ftol_rel!(opt, 1e-8)
 			xtol_rel!(opt, 1e-5)
-			maxtime!(opt, 75)
+			maxtime!(opt, 40) #75 in main specification
 			#maxeval!(opt, 150)  #maxtime seemed to fail on certain runs so added this only for an appendix check
 			min_objective!(opt, (x, grad) -> SSE(x))  #calls on the inner function above 
 

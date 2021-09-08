@@ -12,7 +12,7 @@ using CSV
 #############################################################
 # DEFINE OUTPUT												#
 #############################################################
-bounds = [7; 9; 11; 13; 15; 20]
+bounds = [7; 9; 11; 13; 15]
 #Vars   = ["GrowthOnly"]
 Vars   = ["GrowthOnly"; "CAB"; "Infl"; "EXDEBT"; "None"]
 Variances_2H = zeros(length(Vars), length(bounds))
@@ -23,7 +23,7 @@ NsPlacebo = zeros(length(Vars), length(bounds))
 NsPlacebo = [bounds'; NsPlacebo]
 
 MatchonOrig = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI, :Banking, :Currency, :Debt]
-MatchonCAB = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI, :Banking, :Currency, :Debt, :CAB]
+MatchonCAB =  [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI, :Banking, :Currency, :Debt, :CAB]
 MatchonInfl = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI, :Banking, :Currency, :Debt, :Infl]
 MatchonDebt = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI, :Banking, :Currency, :Debt, :EXDEBT]
 MatchonNone = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI]
@@ -56,10 +56,10 @@ for (k, m) in enumerate(MetaMatchOn)
 		PostErrors = [:PostError1, :PostError2, :PostError3, :PostError4, :PostError5, :PostError6]
 		PostGrowths = [:PostGrowth1, :PostGrowth2, :PostGrowth3, :PostGrowth4, :PostGrowth5, :PostGrowth6]
 		for (pe, pg) in zip(PostErrors, PostGrowths)
-			NullErrors[pe] = map((x,y) -> x-y, Placebos[pg], SyntheticPlacebos[pg])
+			NullErrors[!,pe] = map((x,y) -> x-y, Placebos[!,pg], SyntheticPlacebos[!,pg])
 		end
-		NullErrorsArray			= convert(Array, [NullErrors[:PostError1] NullErrors[:PostError2] NullErrors[:PostError3]]);
-		N 						= size(NullErrorsArray)[1]
+		NullErrorsArray			= Matrix([NullErrors[!,:PostError1] NullErrors[!,:PostError2] NullErrors[!,:PostError3]]);
+		N 						= size(NullErrorsArray, 1)
 		NullCovariance 			= (1/N)*NullErrorsArray'*NullErrorsArray  #calculate variance by hand assuming mean zero
 		Variances_2H[k+1, j]	= NullCovariance[2,2]
 		Variances_3H[k+1,j]		= NullCovariance[3,3]
@@ -71,12 +71,11 @@ for (k, m) in enumerate(MetaMatchOn)
 		dfs = (df2, df3, dfN)
 		Arrays = (Variances_2H, Variances_3H, NsPlacebo)
 		for (A, D) in zip(Arrays, dfs)
-			D[:Seven] = A[2:end, 1]
-			D[:Nine]  = A[2:end, 2]
-			D[:Eleven]  = A[2:end, 3]
-			D[:Thirteen]  = A[2:end, 4]
-			D[:Fifteen]  = A[2:end, 5]
-			D[:Twenty]  = A[2:end, 6]
+			D[!,:Seven] = A[2:end, 1]
+			D[!,:Nine]  = A[2:end, 2]
+			D[!,:Eleven]  = A[2:end, 3]
+			D[!,:Thirteen]  = A[2:end, 4]
+			D[!,:Fifteen]  = A[2:end, 5]
 		end
 
 		CSV.write(joinpath(output_directory, "SecondHorizon.csv"), df2)

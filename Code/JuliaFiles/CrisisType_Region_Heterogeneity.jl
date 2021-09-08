@@ -43,7 +43,7 @@ EuropeN = N[3]
 LatAmN = N[5]
 MidEastN = N[6]
 #NorthAmN = N[7]
-bar(["Africa \n ($AfricaN)", "South Asia \n ($SouthAsiaN)", "East Asia & \n Pacific \n ($EastAsiaN)", "Europe & \n Central Asia \n ($EuropeN)", "Latin Am. \n ($LatAmN)", "Mid. East \n ($MidEastN)"], Averages, color=treatedblue, label="", grid=false, ylabel="Estimated Cumulative Effect")
+bar(["Africa \n ($AfricaN)", "South Asia \n ($SouthAsiaN)", "East Asia & \n Pacific \n ($EastAsiaN)", "Europe & \n Central Asia \n ($EuropeN)", "Latin Am. \n ($LatAmN)", "Mid. East \n ($MidEastN)"], Averages, color=treatedblue, label="", grid=false, ylabel="Estimated Cumulative Output Effect \n (% of crisis year GDP)", guidefontsize = 8)
 savefig(joinpath(output_directory, "RegionsBar.pdf"))    
 return Out
 end

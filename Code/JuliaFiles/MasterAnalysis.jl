@@ -6,6 +6,7 @@
 # the folder.                                               #
 #############################################################
 using Plots
+using Plots.Measures
 using Statistics
 using ColorTypes
 using DataFrames
@@ -43,32 +44,39 @@ controlred = :red
 
 ## LOAD IN ALL IMF LOAN DATA (GROWTH RATES CENTERED AROUND LOAN)
 Loans = CSV.read(joinpath(data_directory, "created", "Loans.csv"), DataFrame)
-Loans = Loans[Loans[:year].>1969,:]
-Loans = Loans[Loans[:year].<2012,:]
+Loans = Loans[Loans[!, :year].>1969,:]
+Loans = Loans[Loans[!, :year].<2014,:]
 #Plot time series of loans vs stabilization loans 
-Stabilization_Loans = Loans[Loans[:Shortterm].==1, :]
-time_series_years = collect(1970:1:2011)
+Stabilization_Loans = Loans[Loans[!, :Shortterm].==1, :]
+time_series_years = collect(1970:1:2013)
 Loan_Count = zeros(length(time_series_years),2)
 for year = 1:size(Loan_Count)[1]
-    Loan_Count[year, 1] = size(Loans[Loans[:year].==1969+year,:])[1]
-    Loan_Count[year, 2] = size(Stabilization_Loans[Stabilization_Loans[:year].==1969+year,:])[1]
+    Loan_Count[year, 1] = size(Loans[Loans[!, :year].==1969+year,:])[1]
+    Loan_Count[year, 2] = size(Stabilization_Loans[Stabilization_Loans[!, :year].==1969+year,:])[1]
 end
-plot(time_series_years, Loan_Count, label="", ylabel="Newly Originated IMF Arrangements", xlabel="", linecolor=[:gray treatedblue], linestyle=[:dash :solid], linewidth=[2 2], grid=false)
-annotate!([(1996.6, 27, text("All \n Loans", 10, :gray, :left))])
-annotate!([(1995.9, 15.15, text("Stabilization \n Loans", 10, treatedblue, :left))])
+plot(time_series_years, Loan_Count, label="", ylabel="Newly Originated IMF Programs", xlabel="", linecolor=[:gray treatedblue], linestyle=[:dash :solid], linewidth=[2 2], grid=false)
+annotate!([(1996.6, 27, text("All \n Loans", 9, :gray, :left))])
+annotate!([(1995.9, 15.15, text("Stabilization \n Loans", 9, treatedblue, :left))])
 savefig(joinpath(output_directory, "TimeSeries.pdf"))
+average_all_loans = mean(Loan_Count[:,1])
+println("Average Number of IMF programs is $average_all_loans.")
+average_all_size = mean(dropmissing(Loans[:,[:AmountAgreedPercentGDP]])[!, :AmountAgreedPercentGDP])
+println("Average Size of all IMF programs is $average_all_size.")
 #Summary Stats Table
+#--Number of non-complete programs--#
+Less_than_Full_drawdown = size(Stabilization_Loans[Stabilization_Loans[!, :AmountDrawnPercentAgreed].<0.99, :],1)/size(Stabilization_Loans, 1)
+println("$Less_than_Full_drawdown of loans withdraw less than the full amount.")
 SummaryVars = [:AmountAgreedPercentGDP, :simple_conditions, :DWDI, :Infl,  :CAB, :EXDEBT]
-SummaryStats = DataFrame(Varname = [:DWDI], Mean = [10.2], Median = [6.1], StdDev = [6.3], N = [10]) #random numbers to start table, deleted next line
-deleterows!(SummaryStats, 1)
+SummaryStats = DataFrame(Varname = [:DWDI], Mean = [10.2], Median = [6.1], StdDev = [6.3], N = [10]) #random numbers to initialize table, deleted next line
+delete!(SummaryStats, 1)
   for (i,s) in enumerate(SummaryVars)
     temp_df = Stabilization_Loans[:,[:year, s]]
     temp_df = temp_df[completecases(temp_df),:]
     temp_arry = zeros(1,4)
-    temp_arry[1,1] = mean(temp_df[s])
-    temp_arry[1,2] = median(temp_df[s])
-    temp_arry[1,3] = sqrt(var(temp_df[s]))
-    temp_arry[1,4] = size(temp_df)[1]
+    temp_arry[1,1] = mean(temp_df[!, s])
+    temp_arry[1,2] = median(temp_df[!, s])
+    temp_arry[1,3] = sqrt(var(temp_df[!, s]))
+    temp_arry[1,4] = size(temp_df, 1)
     push!(SummaryStats, [s temp_arry])
   end
 CSV.write(joinpath(output_directory, "SummaryStats.csv"), SummaryStats)
@@ -79,13 +87,13 @@ LoanPath = LoanPath[completecases(LoanPath),:];
 ## COMPUTE MEAN/MEDIAN GROWTH RATES X YEARS AFTER LOAN
 NShortTermComplete = size(LoanPath)[1]
 println("Number of Short-Term Loans for Summary Path is $NShortTermComplete")
-meanmedLoan = zeros(size(growths)[1],2)
+meanmedLoan = zeros(size(growths, 1),2)
     for (j,g) in enumerate(growths)
-        meanmedLoan[j,1] = mean(LoanPath[g])
-        meanmedLoan[j,2] = median(LoanPath[g])
+        meanmedLoan[j,1] = mean(LoanPath[!, g])
+        meanmedLoan[j,2] = median(LoanPath[!, g])
     end
 
-# ------ FIGURE 1 -----------------------------------------------------------------------#
+# ------ FIGURE 2 -----------------------------------------------------------------------#
 colorMean = :black
 colorMed = RGB(120/255, 120/255, 120/255)
 styleMed = :dashdot
@@ -95,38 +103,38 @@ vline!([0], color=:black, label="", style=:dot)
 xticks!(t)
 xlabel!("Years Since Loan")
 ylabel!("GDP Growth (%)")
-annotate!([(0, 4.0, text("IMF Loan", 9, :black, :left))])
+annotate!([(0.07, 4.0, text("IMF Loan", 9, :black, :left))])
 savefig(joinpath(output_directory, "SummaryPath.pdf"))
 
-#------- FIGURE 2: Financial Crisis (a) & Split to With/Without (b) -------------------------  #
+#------- FIGURE 3: Financial Crisis (a) & Split to With/Without (b) -------------------------  #
 
-AllData					= CSV.read(joinpath(data_directory, "created", "MasterData.csv"), DataFrame)
-NAllCrises 				= size(AllData)[1]
+AllData         = CSV.read(joinpath(data_directory, "created", "MasterData.csv"), DataFrame)
+NAllCrises        = size(AllData, 1)
 #println("Number of total crises for path is $NAllCrises")
-		for z in (:Banking, :Currency, :Debt)
-       		AllData[z] = AllData[z]*.5*2
-		end
-IMFCrises 				= AllData[AllData[:, :IMF].==1, :]
-IMFCrisesGrowths		= IMFCrises[:,growths]
-IMFCrisesGrowths 		= IMFCrises[completecases(IMFCrisesGrowths), :]
-NIMF 					= size(IMFCrisesGrowths)[1]
+    for z in (:Banking, :Currency, :Debt)
+          AllData[!, z] = AllData[!, z]*.5*2 #converts into a float
+    end
+IMFCrises         = AllData[AllData[:, :IMF].==1, :]
+IMFCrisesGrowths    = IMFCrises[:,growths]
+IMFCrisesGrowths    = IMFCrises[completecases(IMFCrisesGrowths), :]
+NIMF          = size(IMFCrisesGrowths, 1)
 println("Number of crises with IMF lending is $NIMF")
-NoIMFCrises				= AllData[AllData[:, :IMF].==0, :]
-NoIMFCrisesGrowths 		= NoIMFCrises[:,growths]
-NoIMFCrisesGrowths 		= NoIMFCrises[completecases(NoIMFCrisesGrowths), :]
-NNoIMF 					= size(NoIMFCrisesGrowths)[1]
+NoIMFCrises       = AllData[AllData[:, :IMF].==0, :]
+NoIMFCrisesGrowths    = NoIMFCrises[:,growths]
+NoIMFCrisesGrowths    = NoIMFCrises[completecases(NoIMFCrisesGrowths), :]
+NNoIMF          = size(NoIMFCrisesGrowths, 1)
 println("Number of crises without IMF lending is $NNoIMF")
-AllCrises				= AllData[:, :]
-AllCrisesGrowths 		= AllCrises[:,growths]
-AllCrisesGrowths 		= AllCrises[completecases(AllCrisesGrowths), :]
-NAllCrises 				= size(AllCrisesGrowths)[1]
+AllCrises       = AllData[:, :]
+AllCrisesGrowths    = AllCrises[:,growths]
+AllCrisesGrowths    = AllCrises[completecases(AllCrisesGrowths), :]
+NAllCrises        = size(AllCrisesGrowths, 1)
 println("Number of total crises for path is $NAllCrises")
 
-CrisisPaths = zeros(size(growths)[1],3)
+CrisisPaths = zeros(size(growths, 1),3)
     for (j,g) in enumerate(growths)
-        CrisisPaths[j,1] = mean(AllCrisesGrowths[g])
-        CrisisPaths[j,2] = mean(IMFCrisesGrowths[g])
-        CrisisPaths[j,3] = mean(NoIMFCrisesGrowths[g])
+        CrisisPaths[j,1] = mean(AllCrisesGrowths[!, g])
+        CrisisPaths[j,2] = mean(IMFCrisesGrowths[!, g])
+        CrisisPaths[j,3] = mean(NoIMFCrisesGrowths[!, g])
     end
 plot(t[1:11], CrisisPaths[1:11,1], legend=:bottomright, label="", grid=false, color=:black, style=:solid, linewidth=2.5, ylim=(0, 4))
 vline!([0], color=:black, label="", style=:dot)
@@ -165,20 +173,20 @@ NullErrors = DataFrame()
 PostErrors = [:PostError1, :PostError2, :PostError3, :PostError4, :PostError5, :PostError6]#, :PostError7]
 PostGrowths = [:PostGrowth1, :PostGrowth2, :PostGrowth3, :PostGrowth4, :PostGrowth5, :PostGrowth6]#, :PostGrowth7]
 for (pe, pg) in zip(PostErrors, PostGrowths)
-	NullErrors[pe] = map((x,y) -> x-y, Placebos[pg], SyntheticPlacebos[pg])
+  NullErrors[!, pe] = map((x,y) -> x-y, Placebos[!, pg], SyntheticPlacebos[!, pg])
 end
 
-NullErrorsArray			= convert(Array, [NullErrors[:PostError1] NullErrors[:PostError2] NullErrors[:PostError3] NullErrors[:PostError4] NullErrors[:PostError5] NullErrors[:PostError6]])# NullErrors[:PostError7]])
+NullErrorsArray     = Matrix([NullErrors[!, :PostError1] NullErrors[!, :PostError2] NullErrors[!, :PostError3] NullErrors[!, :PostError4] NullErrors[!, :PostError5] NullErrors[!, :PostError6]])# NullErrors[:PostError7]])
 
-NullCovariance 			= (1/size(NullErrorsArray)[1])*NullErrorsArray'*NullErrorsArray  #calculate variance by hand assuming mean zero
+NullCovariance      = (1/size(NullErrorsArray, 1))*NullErrorsArray'*NullErrorsArray  #calculate variance by hand assuming mean zero
 
 #-------- RUN ACTUAL SYNTHETICS WITH COVARIANCES ABOVE FOR STANDARD ERRORS -------------#
 
 (TreatedMatched, Synthetics, DonorWeights) = GenSynthetics(IMFCrises, NoIMFCrises, matchon, predict, localtol=bounds, matchweights=W);
 
-#-------- HISTOGRAM OF OBS. UNDERLYING SYNTHETICS (FIGURE A2) --------------------------#
-WeightsArray = convert(Array, DonorWeights[:,4:end])
-synthtot = size(WeightsArray)[1]
+#-------- HISTOGRAM OF OBS. UNDERLYING SYNTHETICS (FIGURE 5c) --------------------------#
+WeightsArray = Matrix(DonorWeights[:,4:end])
+synthtot = size(WeightsArray,1)
 TotalWeight = zeros(synthtot)
 Matched 	= zeros(synthtot)
 for i = 1:synthtot
@@ -187,40 +195,49 @@ for i = 1:synthtot
     	Matched[i]=1
     end
 end
-DonorWeights[:TotalWeight] = TotalWeight
-DonorWeights[:Matched]     = Matched
-NTreat 					   = size(TreatedMatched)[1]
+DonorWeights[!, :TotalWeight] = TotalWeight
+DonorWeights[!, :Matched]     = Matched
+NTreat 					   = size(TreatedMatched, 1)[1]
 histogram(TotalWeight, bins=30, xticks=collect(0:1:5), color=controlred, label="", ylabel="Untreated Observations",
 xlabel="Total (Sum) of Weights in the $NTreat Synthetics", guidefont=9, grid=false)
 savefig(joinpath(output_directory, "Histogram.pdf"))
 
 # -------- TABLE OF INCLUDED OBSERVATIONS (TABLE A1, A2) ------------------------------- #
-TreatedMatched[:Matched] = 1
-IMFCrisesForTable = join(IMFCrises, TreatedMatched, on=[:Country, :year], kind=:outer, makeunique=true)
+TreatedMatched[!, :Matched] = ones(size(TreatedMatched, 1))
+IMFCrisesForTable = outerjoin(IMFCrises, TreatedMatched, on=[:Country, :year], makeunique=true)
 ForAvgSize        = dropmissing(IMFCrisesForTable[:,[:Matched, :AmountAgreedPercentGDP]])
-AvgLoanSize_Matched = mean(ForAvgSize[ForAvgSize[:Matched].==1, :AmountAgreedPercentGDP])
+AvgLoanSize_Matched = mean(ForAvgSize[ForAvgSize[!,:Matched].==1, :AmountAgreedPercentGDP])
+ForAvg_DebtLength = dropmissing(IMFCrisesForTable[:, [:Country, :year, :Debt, :Matched, :default_length]])
+ForAvg_DebtLength = ForAvg_DebtLength[ForAvg_DebtLength[!,:Debt].==1, :]
+AvgDebtLength_Matched = mean(ForAvg_DebtLength[ForAvg_DebtLength[!,:Matched].==1, :default_length])
 println("Avg Loan Size for Matched Obs: $AvgLoanSize_Matched")
+println("Avg Debt Crisis Length for Matched Obs: $AvgDebtLength_Matched")
 completecheck = [growths; :Country; :year; :Banking; :Currency; :Debt; :Matched]
 IMFCrisesForTable = IMFCrisesForTable[:, completecheck]
-IMFCrisesForTable[:Matched] = coalesce.(IMFCrisesForTable[:,:Matched], 0)
+IMFCrisesForTable[!, :Matched] = coalesce.(IMFCrisesForTable[:,:Matched], 0)
 dropmissing!(IMFCrisesForTable)
 IMFCrisesForTable = IMFCrisesForTable[:, [:Country, :year, :Banking, :Currency, :Debt, :Matched]]
 CSV.write(joinpath(output_directory, "TableA1.csv"), IMFCrisesForTable)
 
-NoIMFCrisesForTable = join(NoIMFCrises, DonorWeights, on=[:Country, :year], kind=:outer, makeunique=true)
+NoIMFCrisesForTable = outerjoin(NoIMFCrises, DonorWeights, on=[:Country, :year], makeunique=true)
+#--Check for Length of Debt Crises Here; required before things are dropped because some have missing values--#
+ForAvg_DebtLength_Controls = dropmissing(NoIMFCrisesForTable[:, [:Country, :year, :Debt, :TotalWeight, :default_length]])
+ForAvg_DebtLength_Controls = ForAvg_DebtLength_Controls[ForAvg_DebtLength_Controls[!,:Debt].==1, :]
+AvgDebtLength_Controls 	   = sum(ForAvg_DebtLength_Controls[!, :default_length].*ForAvg_DebtLength_Controls[!, :TotalWeight])/sum(ForAvg_DebtLength_Controls[!, :TotalWeight])
+println("Avg Debt Crisis Length for Control Obs: $AvgDebtLength_Controls")
 completecheck = [completecheck; :TotalWeight]
 NoIMFCrisesForTable = NoIMFCrisesForTable[:, completecheck]
 dropmissing!(NoIMFCrisesForTable)
 NoIMFCrisesForTable = NoIMFCrisesForTable[:, [:Country, :year, :Banking, :Currency, :Debt, :TotalWeight, :Matched]]
 CSV.write(joinpath(output_directory, "TableA2.csv"), NoIMFCrisesForTable)
 
-#--------- GROWTH RATES TREATED VS. SYNTHETIC (FIGURE 3C) ---- #
+#--------- GROWTH RATES TREATED VS. SYNTHETIC (FIGURE 5a) ---- #
 Plot_length = 6
-TreatedGrowthRatesArray		= convert(Array, TreatedMatched[growths])
-NMainRuns					= size(TreatedMatched)[1]
+TreatedGrowthRatesArray   = Matrix(TreatedMatched[!, growths])
+NMainRuns					= size(TreatedMatched, 1)
 println("The number of treated observations with synthetic controls is $NMainRuns")
-SyntheticsGrowthRatesArray 	= convert(Array, Synthetics[growths])
-MeanTreatedVsSynthetics		= zeros(size(growths)[1],2)
+SyntheticsGrowthRatesArray 	= Matrix(Synthetics[!, growths])
+MeanTreatedVsSynthetics		= zeros(size(growths, 1),2)
 		for j = 1:size(growths)[1]
 				MeanTreatedVsSynthetics[j,1] = mean(TreatedGrowthRatesArray[:,j])
 				MeanTreatedVsSynthetics[j,2] = mean(SyntheticsGrowthRatesArray[:,j])
@@ -231,30 +248,30 @@ savefig(joinpath(output_directory, "TreatedGrowthRates.pdf"))
 
 # ---- CUMULATIVE GROWTH RATES ---------------------------------#
 for z = (TreatedMatched, Synthetics)
-      z[:PostGrowth1] = map((x1) -> 100*(1+x1/100 -1), z[:FGrowth1])
-      z[:PostGrowth2] = map((x1,x2) -> 100*((1+x1/100)*(1+x2/100) -1), z[:FGrowth1], z[:FGrowth2])
-      z[:PostGrowth3] = map((x1,x2,x3) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100) -1), z[:FGrowth1], z[:FGrowth2], z[:FGrowth3])
-      z[:PostGrowth4] = map((x1,x2,x3,x4) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100)*(1+x4/100) -1), z[:FGrowth1], z[:FGrowth2], z[:FGrowth3], z[:FGrowth4])
-      z[:PostGrowth5] = map((x1,x2,x3,x4,x5) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100)*(1+x4/100)*(1+x5/100) -1), z[:FGrowth1], z[:FGrowth2], z[:FGrowth3], z[:FGrowth4], z[:FGrowth5])
-      z[:PostGrowth6] = map((x1,x2,x3,x4,x5, x6) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100)*(1+x4/100)*(1+x5/100)*(1+x6/100) -1), z[:FGrowth1], z[:FGrowth2], z[:FGrowth3], z[:FGrowth4], z[:FGrowth5], z[:FGrowth6])
+      z[!,:PostGrowth1] = map((x1) -> 100*(1+x1/100 -1), z[!,:FGrowth1])
+      z[!,:PostGrowth2] = map((x1,x2) -> 100*((1+x1/100)*(1+x2/100) -1), z[!,:FGrowth1], z[!,:FGrowth2])
+      z[!,:PostGrowth3] = map((x1,x2,x3) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100) -1), z[!,:FGrowth1], z[!,:FGrowth2], z[!,:FGrowth3])
+      z[!,:PostGrowth4] = map((x1,x2,x3,x4) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100)*(1+x4/100) -1), z[!,:FGrowth1], z[!,:FGrowth2], z[!,:FGrowth3], z[!,:FGrowth4])
+      z[!,:PostGrowth5] = map((x1,x2,x3,x4,x5) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100)*(1+x4/100)*(1+x5/100) -1), z[!,:FGrowth1], z[!,:FGrowth2], z[!,:FGrowth3], z[!,:FGrowth4], z[!,:FGrowth5])
+      z[!,:PostGrowth6] = map((x1,x2,x3,x4,x5, x6) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100)*(1+x4/100)*(1+x5/100)*(1+x6/100) -1), z[!,:FGrowth1], z[!,:FGrowth2], z[!,:FGrowth3], z[!,:FGrowth4], z[!,:FGrowth5], z[!,:FGrowth6])
       #z[:PostGrowth7] = map((x1,x2,x3,x4,x5, x6, x7) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100)*(1+x4/100)*(1+x5/100)*(1+x6/100)*(1+x7/100) -1), z[:FGrowth1], z[:FGrowth2], z[:FGrowth3], z[:FGrowth4], z[:FGrowth5], z[:FGrowth6], z[:FGrowth7])
 end
 
-MainDiffDataFrame = DataFrame(Country = TreatedMatched[:Country], year = TreatedMatched[:year])
+MainDiffDataFrame = DataFrame(Country = TreatedMatched[!,:Country], year = TreatedMatched[!,:year])
 LDs = [:LevelDiff1, :LevelDiff2, :LevelDiff3, :LevelDiff4, :LevelDiff5, :LevelDiff6]#, :LevelDiff7]
 PostGrowths = [:PostGrowth1, :PostGrowth2, :PostGrowth3, :PostGrowth4, :PostGrowth5, :PostGrowth6]#, :PostGrowth7]
 for (ld, pg) in zip(LDs, PostGrowths)
-	MainDiffDataFrame[ld] = map((x1, x2) -> x1-x2, TreatedMatched[pg], Synthetics[pg])
+	MainDiffDataFrame[!,ld] = map((x1, x2) -> x1-x2, TreatedMatched[!,pg], Synthetics[!,pg])
 end
 
 # ---- Average Difference in Cumulative Growth Rates ------------#
-MainBetas = zeros(size(predict)[1], 3)  #with lower and upper se in cols 2, 3
-N = size(MainDiffDataFrame)[1]
+MainBetas = zeros(size(predict, 1), 3)  #with lower and upper se in cols 2, 3
+N = size(MainDiffDataFrame, 1)
 for (z, w) in enumerate(LDs)
-	MainBetas[z,1] = mean(MainDiffDataFrame[w])
+	MainBetas[z,1] = mean(MainDiffDataFrame[!,w])
   #two ways to compute std: take max to be conservative
-  MainBetas[z,2] = MainBetas[z,1] - max(sqrt(NullCovariance[z,z]/N), std(MainDiffDataFrame[w])/sqrt(N))
-  MainBetas[z,3] = MainBetas[z,1] + max(sqrt(NullCovariance[z,z]/N), std(MainDiffDataFrame[w])/sqrt(N))  
+  MainBetas[z,2] = MainBetas[z,1] - max(sqrt(NullCovariance[z,z]/N), std(MainDiffDataFrame[!,w])/sqrt(N))
+  MainBetas[z,3] = MainBetas[z,1] + max(sqrt(NullCovariance[z,z]/N), std(MainDiffDataFrame[!,w])/sqrt(N))  
 end
 
 #------ Hotelling T-sq for joint significance of first 6 coefficients ------- #
@@ -268,42 +285,48 @@ println("P value for Hotelling T-sq is $PVal")
 
 #------ FIGURE 4 -------------------------------------------------------------#
 plot(collect(0:1:Plot_length), [0; MainBetas[1:Plot_length,1]], linewidth=2.5, grid=false, color=treatedblue, label="", ylabel="Increase in Output (%)", xlabel="Years From Crisis", marker=([:circle], [treatedblue], [2.5]))
-plot!(collect(0:1:Plot_length), [[0; MainBetas[1:Plot_length,2]] [0; MainBetas[1:Plot_length,3]]], color=:black, linestyle = :dot, label=["1 s.e." ""], legend=:bottomleft, ylims=(-3, 4.75))
+plot!(collect(0:1:Plot_length), [[0; MainBetas[1:Plot_length,2]] [0; MainBetas[1:Plot_length,3]]], color=:black, linestyle = :dot, label=["1 s.e." ""], legend=:bottomleft, ylims=(-3, 4.25))
 hline!([0], color=:black, style=:dot, label="")
 savefig(joinpath(output_directory, "MainIRF.pdf"))
 
-# ------ FIGURE A1 ------------------------------------------------------------#
-density(MainDiffDataFrame[:LevelDiff2], color=treatedblue, yticks=nothing, xlabel="Level Difference", grid=false, label="t=2", legend=:topleft, style=:solid, linewidth=2, ylabel="Density")
-density!(MainDiffDataFrame[:LevelDiff3], color=treatedblue, style=:dashdot, label="t=3", linewidth=2)
-density!(MainDiffDataFrame[:LevelDiff4], color=treatedblue, style=:dot, label="t=4", linewidth=2)
+# ------ FIGURE 5b ------------------------------------------------------------#
+density(MainDiffDataFrame[!,:LevelDiff2], color=treatedblue, yticks=nothing, xlabel="Level Difference", grid=false, label="t=2", legend=:topleft, style=:solid, linewidth=2, ylabel="Density", left_margin=5mm)
+density!(MainDiffDataFrame[!,:LevelDiff3], color=treatedblue, style=:dashdot, label="t=3", linewidth=2)
+density!(MainDiffDataFrame[!,:LevelDiff4], color=treatedblue, style=:dot, label="t=4", linewidth=2)
 vline!([0], color=:black, style=:dot, label="")
 savefig(joinpath(output_directory, "MainDensity.pdf"))
 
 # -------- Cumulative Effect Size By Treated (Integral of IRF) ------- #
-TreatedMatched[:CumulativeEffect] = map((x1,x2,x3,x4,x5, x6) -> +(x1, x2, x3, x4, x5, x6), MainDiffDataFrame[:LevelDiff1], MainDiffDataFrame[:LevelDiff2], MainDiffDataFrame[:LevelDiff3], MainDiffDataFrame[:LevelDiff4], MainDiffDataFrame[:LevelDiff5], MainDiffDataFrame[:LevelDiff6])
-MainMean = mean(TreatedMatched[:CumulativeEffect])
+TreatedMatched[!,:CumulativeEffect] = map((x1,x2,x3,x4,x5) -> +(x1, x2, x3, x4, x5), MainDiffDataFrame[!,:LevelDiff1], MainDiffDataFrame[!,:LevelDiff2], MainDiffDataFrame[!,:LevelDiff3], MainDiffDataFrame[!,:LevelDiff4], MainDiffDataFrame[!,:LevelDiff5])#, MainDiffDataFrame[!,:LevelDiff6])
+MainMean = mean(TreatedMatched[!,:CumulativeEffect])
 println("Average Cumulative Effect is $MainMean")
 IMF_Multiplier = MainMean/AvgLoanSize_Matched
 println("BOE multiplier is $IMF_Multiplier")
 
-# -------- Heterogeneity Results (FIGURE 5) ------------------- #
+# -------- Heterogeneity Results (FIGURE 6) ------------------- #
 CrisisAverages = ByCrisisType()
 RegionAverages = ByRegion()
 HeterogeneityScatter(:WGI)
 HeterogeneityScatter(:year)
 HeterogeneityScatter(:conditions)
 HeterogeneityScatter(:AmountAgreedPercentGDP)
+HeterogeneityScatter(:AmountDrawnPercentAgreed)
+HeterogeneityScatter(:quant_conditions)
+HeterogeneityScatter(:structural_conditions)
 #---- TABLE A6 ------------------------------------------------ #
-include(joinpath(code_directory, "Heterogeneity_Regressions.jl"))
+#include(joinpath(code_directory, "Heterogeneity_Regressions.jl"))
 
-# ------- ROBUSTNESS (BOTH FIGURE 4 & APPENDIX) -------------- #
-#include(joinpath(code_directory, "RobustnessRuns.jl"))
+# ------- ROBUSTNESS (BOTH FIGURE 5d & APPENDIX) -------------- #
+include(joinpath(code_directory, "RobustnessRuns.jl"))
 
 # ------- TABLE 1 (AND A5) ARE MADE IN STATA [SEE "ForecastRegressoins_Table1.do"] -----------------------# 
 
 # ------- APPENDIX TABLE A3, A4 ---------------#
 #Takes a long time to run, only uncomment to replicate that particular Table
 #include(joinpath(code_directory, "PlaceboComparisonTable.jl"))
+
+# ------- Levels Appendix ------------------------------------- #
+#include(joinpath(code_directory, "Levels_Appendix.jl"))
 
 
 

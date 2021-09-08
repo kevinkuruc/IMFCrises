@@ -14,6 +14,7 @@ collapse (firstnm) Country Type (sum) AmountAgreed AmountDrawn count (max) yeare
 replace Type="Multi" if count>1
 drop count
 
+gen AmountDrawnPercentAgreed = AmountDrawn/AmountAgreed
 label var AmountAgreed "In Thousands SDRs (Current)"
 label var AmountDrawn "In Thousands SDRs (Current)"
 label var Type "Lending Instrument"
@@ -73,7 +74,7 @@ gen AmountDrawnPercentGDP  = 100*(1000*AmountDrawnUSD/(NGDPUSD))
 
 summ AmountAgreedPercentGDP if AmountAgreed!=., detail
 
-drop SDRX AmountAgreed AmountDrawn NGDPUSD
+drop SDRX AmountAgreed NGDPUSD
 
 replace Type="ESF" if Type=="Exogenous Shock Facility"
 replace Type="ECF" if Type=="Extended Credit Facility"
@@ -100,6 +101,6 @@ summ count
 qui merge 1:1 year using "`CPI'"
 
 qui gen RealAmountAgreed = AmountAgreedUSD*251.1/CPI/1000000 //251.1 is CPI in 2018, divide by 1000000 to put in billions
-summ RealAmountAgreed if year>1969 & year<2011, detail
+summ RealAmountAgreed if year>1969 & year<2014, detail
 
 

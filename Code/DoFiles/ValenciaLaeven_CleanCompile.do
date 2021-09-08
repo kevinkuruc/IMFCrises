@@ -1,4 +1,3 @@
-cd "C:\Users\Kevin\Documents\GitHub\IMFCrises"
 
 import excel "Data/original/SYSTEMIC BANKING CRISES DATABASE_2018.xlsx", sheet("Crisis Years") clear
 rename A Country

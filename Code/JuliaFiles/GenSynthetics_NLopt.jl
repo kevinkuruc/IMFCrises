@@ -5,8 +5,8 @@ using NLopt
 using LinearAlgebra
 
 function GenSynthetics(Treated::DataFrame, Pool::DataFrame, matchon::Array{Symbol,1}, predict::Array{Symbol,1}; matchtol = Inf, localtol = Inf*ones(15,1), matchweights=ones(15,1))
-	m = size(matchon)[1]
-	b = size(localtol)[1]
+	m = size(matchon, 1)
+	b = size(localtol, 1)
 		if m >b  
 		println("Must include more bounds than matching variables. Program only fitted to handled 10 matching vars, if including more must manually enter a vector of tolerances as localtol=[Inf ... Inf]")
 		return false
@@ -16,19 +16,19 @@ function GenSynthetics(Treated::DataFrame, Pool::DataFrame, matchon::Array{Symbo
 	# Step 1: drop observations missing any variable used in analysis
 	#################################################################
 
-	bign = size(Treated)[1]
-	bigp = size(Pool)[1]
-	Treated[:ID] = collect(1:1:bign)
-	Pool[:ID] = collect(1:1:bigp)
+	bign = size(Treated, 1)
+	bigp = size(Pool, 1)
+	Treated[!, :ID] = collect(1:1:bign)
+	Pool[!, :ID] = collect(1:1:bigp)
 	completecheck = [:ID; matchon; predict]
 	tempTreat = Treated[:, completecheck]
 	tempPool = Pool[:, completecheck]
 	tempTreat = tempTreat[completecases(tempTreat),:]
 	tempPool = tempPool[completecases(tempPool),:]
-	TreatCompleteID = DataFrame(ID = tempTreat[:ID])
-	PoolCompleteID = DataFrame(ID = tempPool[:ID])
-	Treated = join(Treated, TreatCompleteID, on=:ID, kind=:inner)
-	Pool = join(Pool, PoolCompleteID, on=:ID, kind=:inner)
+	TreatCompleteID = DataFrame(ID = tempTreat[!, :ID])
+	PoolCompleteID = DataFrame(ID = tempPool[!, :ID])
+	Treated = innerjoin(Treated, TreatCompleteID, on=:ID)
+	Pool = innerjoin(Pool, PoolCompleteID, on=:ID)
 	completen = size(Treated)[1]
 	completep = size(Pool)[1]
 
@@ -36,14 +36,14 @@ function GenSynthetics(Treated::DataFrame, Pool::DataFrame, matchon::Array{Symbo
 	# Step 2: Redefine IDs, Declare DataFrames that will be output
 	############################################################
 	
-	Treated[:ID] = collect(1:1:completen)
-	Pool[:ID] = collect(1:1:completep)
+	Treated[!, :ID] = collect(1:1:completen)
+	Pool[!, :ID] = collect(1:1:completep)
 	Weights = Pool[:, [:Country, :year, :ID]]
 	Synthetic = DataFrame(Pool[1,[[:Country, :year]; matchon; predict]])
-	Synthetic[:SqError] = [0.]
-	deleterows!(Synthetic, 1)
+	Synthetic[!, :SqError] = [0.]
+	delete!(Synthetic, 1)
 	TreatedMatched = DataFrame(Treated[1,:])
-	deleterows!(TreatedMatched, 1)
+	delete!(TreatedMatched, 1)
 
 	#############################################################
 	# Step 3: Loop over Treated, make synthetics
@@ -64,16 +64,16 @@ function GenSynthetics(Treated::DataFrame, Pool::DataFrame, matchon::Array{Symbo
 		# ------ Copy Donor Pool; keep only observations within matching bounds#
 		LocalPool = copy(Pool) 
 		for v = 1:m
-			q  = size(LocalPool)[1]
-			LocalPool = LocalPool[abs.(LocalPool[matchon[v]]-tomatch[v]*ones(q)).<localtol[v],:]
+			q  = size(LocalPool, 1)
+			LocalPool = LocalPool[abs.(LocalPool[!, matchon[v]]-tomatch[v]*ones(q)).<localtol[v],:]
 		end
 		q = size(LocalPool)[1] #trimmed to local size
-		PoolWeight = DataFrame(ID = LocalPool[:ID])
+		PoolWeight = DataFrame(ID = LocalPool[!, :ID])
 		
 		# ------- If no local donors, move on; if donors, minimize sq errors --#
 		if q>0
 			#println("$country $yr has local donors!")
-			obsvec = convert(Array, obs)
+			#obsvec = convert(Array, obs)
 		# ------ Define these things are matrices instead of DataFrames -------- #
 			poolMatrixMatching = ones(q,m)
 				for v = 1:m
@@ -98,23 +98,23 @@ function GenSynthetics(Treated::DataFrame, Pool::DataFrame, matchon::Array{Symbo
 			equality_constraint!(opt, (x, grad) -> sumone(x), 1e-10)
 			ftol_rel!(opt, 1e-8)
 			xtol_rel!(opt, 1e-5)
-			maxtime!(opt, 75)
+			maxtime!(opt, 75) #75 in main specification
 			#maxeval!(opt, 150)  #maxtime seemed to fail on certain runs so added this only for an appendix check
 			min_objective!(opt, (x, grad) -> SSE(x))  #calls on the inner function above 
 
 			initguess = 1/q * ones(q)
 			(sol, weight, ret) = optimize(opt, initguess);
+			#println("Finished $country")
 			# ---- Now plug solution into output dataframes ------ #
 			if sol < matchtol
 			RelevantPoolData = LocalPool[:, [matchon; predict]]
-			poolForCollapse = convert(Array, RelevantPoolData)
+			poolForCollapse = Matrix(RelevantPoolData)
 			Collapsed = weight'*poolForCollapse
 			Synthvect = ["Synthetic $country" yr Collapsed sol]
 			push!(Synthetic, Synthvect)
-			foradd = convert(Array, Treated[i,:])
-			push!(TreatedMatched, foradd)
-			PoolWeight[:weight] = weight
-			Weights = join(Weights, PoolWeight, on=:ID, kind=:outer, makeunique=true)
+			push!(TreatedMatched, Treated[i,:])
+			PoolWeight[!, :weight] = weight
+			Weights = outerjoin(Weights, PoolWeight, on=:ID, makeunique=true)
 			end
 		end
 	end
@@ -122,7 +122,7 @@ function GenSynthetics(Treated::DataFrame, Pool::DataFrame, matchon::Array{Symbo
 	#########################################
 	# Finally: For treated observations that had no local donors, replace missing weights with 0
 	#########################################
-	NMatched = size(TreatedMatched)[1]
+	NMatched = size(TreatedMatched, 1)
 	for i = 1:NMatched+3  #have 3 extra rows for country, year id
 		for j = 1:completep
 			if typeof(Weights[j,i])==Missing

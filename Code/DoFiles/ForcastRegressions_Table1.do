@@ -27,6 +27,7 @@ qui keep if CumulativeFcast3 !=.
 qui keep if CumulativeGrowth3 !=.
 qui drop if Currency==.
 qui drop if DWDI==.
+*qui drop if Banking+Currency+Debt>1 
 local growthcontrols DWDI Banking Currency Debt
 reg CumulativeGrowth1 CumulativeFcast1  
 reg CumulativeGrowth1 CumulativeFcast1 `growthcontrols'  

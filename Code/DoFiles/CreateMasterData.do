@@ -9,7 +9,7 @@ clear all
 set more off
 
 *Enter directory here
-cd "C:\Users\Kevin\Documents\GitHub\IMFCrises"
+cd "C:\Users\Admin\Documents\GitHub\IMFCrises"
 
 *Loading in from various external sources
 do "Code\DoFiles\StandardAggregates_CleanCompile.do"

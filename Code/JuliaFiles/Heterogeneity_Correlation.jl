@@ -49,7 +49,7 @@ function HeterogeneityScatter(s::Symbol)
 		xlab="Amount Drawn (Fraction of Agreed)"
 	end
 	scatter(Temp[!,s], Temp[!,:CumulativeEffect], label="", ylabel="Estimated Cumulative Output Effect \n (% of crisis year GDP)", guidefontsize = 8, grid=false, xlabel=xlab, marker=:x, markercolor=:gray, ylims=(-100,200),  markersize=2)
-	plot!(x, yhat, label="", linecolor=treatedblue, linestyle=:solid, linewidth=[1.7])
+	plot!(x, yhat, label="", linecolor=treatedblue, linestyle=:solid, linewidth=[1.7], fontfamily="Times")
 	if s ==:AmountAgreedPercentGDP 
 	plot!(x2, yhat2, label="Without Outlier", linecolor=:gray, linestyle=:solid, linewidth=[1.7], xlims=(0, 15))
 	elseif s ==:AmountDrawnPercentAgreed

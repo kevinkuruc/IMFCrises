@@ -31,7 +31,7 @@ N_levels = size(Placebos_Levels, 1)
 println("This matchtol generates $N_levels values; as opposed to 82 for main specification.")
 
 #Run Levels Analysis
-(Treated_Levels, Synthetics_Levels, Weights_Levels) = GenSynthetics(IMFCrises_Levels, NoIMFCrises_Levels, matchon, predict, localtol=bounds, matchtol=3000000, matchweights=W)
+(Treated_Levels, Synthetics_Levels, Weights_Levels) = GenSynthetics(IMFCrises_Levels, NoIMFCrises_Levels, matchon, predict, localtol=bounds, matchtol=500000, matchweights=W)
 
 t = collect(-5:1:6)
 
@@ -52,8 +52,22 @@ for (j,data) in enumerate(z)
     Levels_Outcomes[12, j] = mean(data[!,:FLevels6])
 end
 
+# ---- Average Difference in Cumulative Growth Rates ------------#
+LevelBetas = zeros(size(predict, 1), 2)  #with and without correction for starting point
+for (z, w) in enumerate(LDs)
+    Level_Betas[z,1] = 100*(Levels_Outcomes[z+6,1]/Levels_Outcomes[6,1] - Levels_Outcomes[z+6,2]/Levels_Outcomes[6,2])
+    Level_Betas[z,2] = 100*(Levels_Outcomes[z+6,1]/Levels_Outcomes[z+6,2] -1)
+end
+
 plot(collect(-5:1:6), Levels_Outcomes, label=["Treated" "Synthetics"], linecolor=[treatedblue controlred], linestyle=[:solid :dash], legend=:topleft, linewidth=[2.5 2],
     xticks=(collect(-5:1:6)), grid=false, ylabel="GDP per capita (2011 USD)")
-vline!([0], linestyle=:dashdot, linewidth=.75, color=:black, label="")
-savefig(joinpath(output_directory, "Level_Analysis_3Mill.pdf"))
-savefig(joinpath(output_directory, "Level_Analysis_3Mill.svg"))
+vline!([0], linestyle=:dashdot, linewidth=.75, color=:black, label="", fontfamily="Times")
+savefig(joinpath(output_directory, "Level_Analysis_500K.pdf"))
+savefig(joinpath(output_directory, "Level_Analysis_500K.svg"))
+
+plot(t[6:end], [0; MainBetas[:,1]], linewidth=2.5, color=treatedblue, grid=false, label="Main Results", xlabel="Years From Crisis", ylabel = "Increase in Output (%)", legend=:bottomleft, foreground_color_legend=nothing, background_color_legend=nothing, fontfamily="Times", legendfontsize=8, ylims=(-3,4.0), marker=([:circle], [treatedblue], [2.8]))
+plot!(t[6:end], [0; Level_Betas[:, 1]], linewidth=1.9, color=g1, style=:dash, label="Level Analysis (Comparison of Cumulative Growth)", marker=([:hexagon], [g1], [2.5]))
+plot!(t[6:end], [0; Level_Betas[:, 2]], linewidth=1.9, color=g1, style=:dot, label="Level Analysis (Comparison of Raw Levels)", marker=([:xcross], [g1], [2.5]), guidefont="Times", legendfont="Times")
+hline!([0], color=:black, style=:dot, label="")
+savefig(joinpath(output_directory, "Levels_IRF.pdf"))
+savefig(joinpath(output_directory, "Levels_IRF.svg"))

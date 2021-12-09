@@ -54,9 +54,10 @@ for year = 1:size(Loan_Count)[1]
     Loan_Count[year, 1] = size(Loans[Loans[!, :year].==1969+year,:])[1]
     Loan_Count[year, 2] = size(Stabilization_Loans[Stabilization_Loans[!, :year].==1969+year,:])[1]
 end
-plot(time_series_years, Loan_Count, label="", ylabel="Newly Originated IMF Programs", xlabel="", linecolor=[:gray treatedblue], linestyle=[:dash :solid], linewidth=[2 2], grid=false)
-annotate!([(1996.6, 27, text("All \n Loans", 9, :gray, :left))])
-annotate!([(1995.9, 15.15, text("Stabilization \n Loans", 9, treatedblue, :left))])
+plot(time_series_years, Loan_Count, label="", ylabel="Newly Originated IMF Programs", xlabel="", linecolor=[:gray treatedblue], 
+      linestyle=[:dash :solid], linewidth=[2 2], grid=false, fontfamily="Times")
+annotate!([(1996.6, 27, text("All \n Loans", 9, :gray, :left, :Times))])
+annotate!([(1995.9, 15.15, text("Stabilization \n Loans", 9, treatedblue, :left, :Times))])
 savefig(joinpath(output_directory, "TimeSeries.pdf"))
 average_all_loans = mean(Loan_Count[:,1])
 println("Average Number of IMF programs is $average_all_loans.")
@@ -98,12 +99,12 @@ colorMean = :black
 colorMed = RGB(120/255, 120/255, 120/255)
 styleMed = :dashdot
 plot(t[1:11], meanmedLoan[1:11,:], label= ["Mean" "Median"], legend=:bottomright, grid=false, color=treatedblue, style=[:solid styleMed],
-linewidth=[2.5 2.5])
+    linewidth=[2.5 2.5], fontfamily="Times")
 vline!([0], color=:black, label="", style=:dot)
 xticks!(t)
 xlabel!("Years Since Loan")
 ylabel!("GDP Growth (%)")
-annotate!([(0.07, 4.0, text("IMF Loan", 9, :black, :left))])
+annotate!([(0.07, 4.0, text("IMF Loan", 9, :black, :left, :Times))])
 savefig(joinpath(output_directory, "SummaryPath.pdf"))
 
 #------- FIGURE 3: Financial Crisis (a) & Split to With/Without (b) -------------------------  #
@@ -136,15 +137,16 @@ CrisisPaths = zeros(size(growths, 1),3)
         CrisisPaths[j,2] = mean(IMFCrisesGrowths[!, g])
         CrisisPaths[j,3] = mean(NoIMFCrisesGrowths[!, g])
     end
-plot(t[1:11], CrisisPaths[1:11,1], legend=:bottomright, label="", grid=false, color=:black, style=:solid, linewidth=2.5, ylim=(0, 4))
+plot(t[1:11], CrisisPaths[1:11,1], legend=:bottomright, label="", grid=false, color=:black, style=:solid, linewidth=2.5, ylim=(0, 4), guidefont="Times", legendfont="Times")
 vline!([0], color=:black, label="", style=:dot)
 xticks!(t)
 xlabel!("Years Since Crisis")
 ylabel!("GDP Growth (%)")
-annotate!([(0, 3.4, text("Crisis Date", 9, :black, :left))])
+annotate!([(0, 3.4, text("Crisis Date", 9, :black, :left, :Times))])
 savefig(joinpath(output_directory, "AvgPathCrises_AllCrises.pdf"))
 
-plot(t[1:11], CrisisPaths[1:11,2:3], legend=:bottomright, label=["W/ IMF" "W/o IMF"], grid=false, color=[treatedblue controlred], style=[:solid :dashdot], linewidth=[2.5 2.5], ylim=(0, 4))
+plot(t[1:11], CrisisPaths[1:11,2:3], legend=:bottomright, label=["W/ IMF" "W/o IMF"], grid=false, color=[treatedblue controlred], style=[:solid :dashdot],
+    linewidth=[2.5 2.5], ylim=(0, 4), fontfamily="Times")
 vline!([0], color=:black, label="", style=:dot)
 xticks!(t)
 xlabel!("Years Since Crisis")
@@ -199,7 +201,7 @@ DonorWeights[!, :TotalWeight] = TotalWeight
 DonorWeights[!, :Matched]     = Matched
 NTreat 					   = size(TreatedMatched, 1)[1]
 histogram(TotalWeight, bins=30, xticks=collect(0:1:5), color=controlred, label="", ylabel="Untreated Observations",
-xlabel="Total (Sum) of Weights in the $NTreat Synthetics", guidefont=9, grid=false)
+xlabel="Total (Sum) of Weights in the $NTreat Synthetics", guidefont=9, grid=false, fontfamily="Times")
 savefig(joinpath(output_directory, "Histogram.pdf"))
 
 # -------- TABLE OF INCLUDED OBSERVATIONS (TABLE A1, A2) ------------------------------- #
@@ -242,7 +244,8 @@ MeanTreatedVsSynthetics		= zeros(size(growths, 1),2)
 				MeanTreatedVsSynthetics[j,1] = mean(TreatedGrowthRatesArray[:,j])
 				MeanTreatedVsSynthetics[j,2] = mean(SyntheticsGrowthRatesArray[:,j])
 		end
-plot(t[1:Plot_length+6], MeanTreatedVsSynthetics[1:Plot_length+6, :], linewidth=[2.5 2], grid=false, color=[treatedblue controlred], label=["Treated" "Synthetic"],xticks=collect(-5:1:Plot_length), ylabel="Percentage Points", xlabel="Years Since Crisis", style=[:solid :dashdot], legend=:bottomleft)
+plot(t[1:Plot_length+6], MeanTreatedVsSynthetics[1:Plot_length+6, :], linewidth=[2.5 2], grid=false, color=[treatedblue controlred], label=["Treated" "Synthetic"],
+    xticks=collect(-5:1:Plot_length), ylabel="Percentage Points", xlabel="Years Since Crisis", style=[:solid :dashdot], legend=:bottomleft, fontfamily="Times")
 vline!([0], linestyle=:dashdot, linewidth=.75, color=:black, label="")
 savefig(joinpath(output_directory, "TreatedGrowthRates.pdf"))
 
@@ -285,12 +288,13 @@ println("P value for Hotelling T-sq is $PVal")
 
 #------ FIGURE 4 -------------------------------------------------------------#
 plot(collect(0:1:Plot_length), [0; MainBetas[1:Plot_length,1]], linewidth=2.5, grid=false, color=treatedblue, label="", ylabel="Increase in Output (%)", xlabel="Years From Crisis", marker=([:circle], [treatedblue], [2.5]))
-plot!(collect(0:1:Plot_length), [[0; MainBetas[1:Plot_length,2]] [0; MainBetas[1:Plot_length,3]]], color=:black, linestyle = :dot, label=["1 s.e." ""], legend=:bottomleft, ylims=(-3, 4.25))
+plot!(collect(0:1:Plot_length), [[0; MainBetas[1:Plot_length,2]] [0; MainBetas[1:Plot_length,3]]], color=:black, linestyle = :dot, label=["1 s.e." ""], legend=:bottomleft, ylims=(-3, 4.25), fontfamily="Times")
 hline!([0], color=:black, style=:dot, label="")
 savefig(joinpath(output_directory, "MainIRF.pdf"))
 
 # ------ FIGURE 5b ------------------------------------------------------------#
-density(MainDiffDataFrame[!,:LevelDiff2], color=treatedblue, yticks=nothing, xlabel="Level Difference", grid=false, label="t=2", legend=:topleft, style=:solid, linewidth=2, ylabel="Density", left_margin=5mm)
+density(MainDiffDataFrame[!,:LevelDiff2], color=treatedblue, yticks=nothing, xlabel="Level Difference", grid=false,
+     label="t=2", legend=:topleft, style=:solid, linewidth=2, ylabel="Density", left_margin=5mm, fontfamily="Times")
 density!(MainDiffDataFrame[!,:LevelDiff3], color=treatedblue, style=:dashdot, label="t=3", linewidth=2)
 density!(MainDiffDataFrame[!,:LevelDiff4], color=treatedblue, style=:dot, label="t=4", linewidth=2)
 vline!([0], color=:black, style=:dot, label="")
@@ -317,7 +321,7 @@ HeterogeneityScatter(:structural_conditions)
 #include(joinpath(code_directory, "Heterogeneity_Regressions.jl"))
 
 # ------- ROBUSTNESS (BOTH FIGURE 5d & APPENDIX) -------------- #
-#include(joinpath(code_directory, "RobustnessRuns.jl"))
+include(joinpath(code_directory, "RobustnessRuns.jl"))
 
 # ------- TABLE 1 (AND A5) ARE MADE IN STATA [SEE "ForecastRegressoins_Table1.do"] -----------------------# 
 
@@ -326,7 +330,7 @@ HeterogeneityScatter(:structural_conditions)
 #include(joinpath(code_directory, "PlaceboComparisonTable.jl"))
 
 # ------- Levels Appendix ------------------------------------- #
-#include(joinpath(code_directory, "Levels_Appendix.jl"))
+include(joinpath(code_directory, "Levels_Appendix.jl"))
 
 
 

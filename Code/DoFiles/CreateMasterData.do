@@ -25,6 +25,8 @@ merge 1:1 Country_code year using "Data\created\ValenciaLaeven.dta" //Yugoslavia
 drop if _merge==2
 drop _merge
 
+gen LogInfl = log(Infl)
+
 **Count Crises for Section 1 Summary Stat
 count if Banking==1 & Currency==0 & Debt==0 & year>1969 & year<2014
 count if Banking==0 & Currency==1 & Debt==0 & year>1969 & year<2014
@@ -148,7 +150,7 @@ replace Type = Type[_n+1] if treat==1 & Type==""
 local ForJulia Country Country_code year IMF advecon Banking Currency Debt LGrowth5 LGrowth4 LGrowth3 LGrowth2 LGrowth1
 DWDI FGrowth1 FGrowth2 FGrowth3 FGrowth4 FGrowth5 FGrowth6 Region WGI 
 conditions quant_conditions structural_conditions AmountAgreedPercentGDP AmountDrawnPercentAgreed AmountDrawn default_length
-EXDEBT CAB Infl GDPRank pop Gshare rgdpe;
+EXDEBT CAB Infl LogInfl GDPRank pop Gshare rgdpe;
 #delimit cr
 preserve 
 keep if treat==1 | control==1

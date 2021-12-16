@@ -63,7 +63,7 @@ bounds            = [B, B, B, B, B, B, .5, .5, .5, Inf]
 matchon           = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI, :Banking, :Currency, :Debt, :CAB, :Infl, :EXDEBT]
 Weights           = ones(size(matchon))
 Weights[end-2]    = Growth_variance/CAB_variance
-Weights[end-1]      = Growth_variance/Infl_variance
+Weights[end-1]    = Growth_variance/Infl_variance
 Weights[end]      = Growth_variance/Debt_variance
 bounds            = [B, B, B, B, B, B, .5, .5, .5, Inf, Inf, Inf]
 (Treated_AllThree, Synthetics_AllThree, Weights_AllThree) = GenSynthetics(IMFCrises, NoIMFCrises, matchon, predict, localtol=bounds, matchweights=Weights);
@@ -89,17 +89,6 @@ matchon = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI, :Bankin
 bounds  = [B+6, B+6, B+6, B+6, B+6, B+6, .5, .5, .5]
 W       = ones(10,1)
 (Treated_WideBounds3, Synthetics_WideBounds3, Weights_WideBounds3) = GenSynthetics(IMFCrises, NoIMFCrises, matchon, predict, localtol=bounds, matchweights=W);
-
-#matchon = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI, :Banking, :Currency, :Debt]
-#bounds  = [B+8, B+8, B+8, B+8, B+8, B+8, .5, .5, .5]
-#W       = ones(10,1)
-#(Treated_WideBounds4, Synthetics_WideBounds4, Weights_WideBounds4) = GenSynthetics(IMFCrises, NoIMFCrises, matchon, predict, localtol=bounds, matchweights=W);
-
-#---NO LOCAL BOUNDS ----------------------------#
-#matchon = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI, :Banking, :Currency, :Debt]
-#bounds  = [25, 25, 25, 25, 25, 25, .5, .5, .5]
-#W       = ones(10,1)
-#(Treated_NoBounds, Synthetics_NoBounds, Weights_NoBounds) = GenSynthetics(IMFCrises, NoIMFCrises, matchon, predict, localtol=bounds, matchweights=W);
 
 #----ANY CRISIS TYPE CAN MATCH ---- #
 matchon = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI]
@@ -212,8 +201,6 @@ for (h, pg) in enumerate(PostGrowths)
       RobustnessChecks[h+2,13] = mean(TempDiff)
       TempDiff = Array(Treated_WideBounds3[!,pg]-Synthetics_WideBounds3[!,pg])
       RobustnessChecks[h+2,14] = mean(TempDiff)
-      #TempDiff = Array(Treated_WideBounds4[!,pg]-Synthetics_WideBounds4[!,pg])
-      #RobustnessChecks[h+2,15] = mean(TempDiff)
       TempDiff = Array(Treated_LogInfl[!,pg]-Synthetics_LogInfl[!,pg])
       RobustnessChecks[h+2,15] = mean(TempDiff)
       TempDiff = Array(Treated_AllThree[!,pg]-Synthetics_AllThree[!,pg])

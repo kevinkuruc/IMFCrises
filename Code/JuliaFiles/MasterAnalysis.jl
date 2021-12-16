@@ -137,7 +137,7 @@ CrisisPaths = zeros(size(growths, 1),3)
         CrisisPaths[j,2] = mean(IMFCrisesGrowths[!, g])
         CrisisPaths[j,3] = mean(NoIMFCrisesGrowths[!, g])
     end
-plot(t[1:11], CrisisPaths[1:11,1], legend=:bottomright, label="", grid=false, color=:black, style=:solid, linewidth=2.5, ylim=(0, 4), guidefont="Times", legendfont="Times")
+plot(t[1:11], CrisisPaths[1:11,1], legend=:bottomright, label="", grid=false, color=:black, style=:solid, linewidth=2.5, ylim=(0, 4), fontfamily="Times")
 vline!([0], color=:black, label="", style=:dot)
 xticks!(t)
 xlabel!("Years Since Crisis")
@@ -145,12 +145,13 @@ ylabel!("GDP Growth (%)")
 annotate!([(0, 3.4, text("Crisis Date", 9, :black, :left, :Times))])
 savefig(joinpath(output_directory, "AvgPathCrises_AllCrises.pdf"))
 
-plot(t[1:11], CrisisPaths[1:11,2:3], legend=:bottomright, label=["W/ IMF" "W/o IMF"], grid=false, color=[treatedblue controlred], style=[:solid :dashdot],
+plot(t[1:11], CrisisPaths[1:11,2:3], legend=:bottomright, label=["With IMF" "Without IMF"], grid=false, color=[treatedblue controlred], style=[:solid :dashdot],
     linewidth=[2.5 2.5], ylim=(0, 4), fontfamily="Times")
 vline!([0], color=:black, label="", style=:dot)
 xticks!(t)
 xlabel!("Years Since Crisis")
 ylabel!("GDP Growth (%)")
+annotate!([(0, 3.4, text("Crisis Date", 9, :black, :left, :Times))])
 savefig(joinpath(output_directory, "AvgPathCrises_WithWithout.pdf"))
 
 #########################################################################################
@@ -318,7 +319,7 @@ HeterogeneityScatter(:AmountDrawnPercentAgreed)
 HeterogeneityScatter(:quant_conditions)
 HeterogeneityScatter(:structural_conditions)
 #---- TABLE A6 ------------------------------------------------ #
-#include(joinpath(code_directory, "Heterogeneity_Regressions.jl"))
+include(joinpath(code_directory, "Heterogeneity_Regressions.jl"))
 
 # ------- ROBUSTNESS (BOTH FIGURE 5d & APPENDIX) -------------- #
 include(joinpath(code_directory, "RobustnessRuns.jl"))
@@ -330,7 +331,8 @@ include(joinpath(code_directory, "RobustnessRuns.jl"))
 #include(joinpath(code_directory, "PlaceboComparisonTable.jl"))
 
 # ------- Levels Appendix ------------------------------------- #
-include(joinpath(code_directory, "Levels_Appendix.jl"))
+#Takes a long time to run, only uncomment to replicate that appendix
+#include(joinpath(code_directory, "Levels_Appendix.jl"))
 
 
 

@@ -16,18 +16,21 @@ function HeterogeneityScatter(s::Symbol)
 			y 	= Array(Temp2[!,:CumulativeEffect])
 			(b,v) = Regress(y,x2)
 			yhat2 = b[1]ones(size(x2,1)) + b[2]*x2
+			println("Amount Agreed b2 is $b")
 	elseif s ==:AmountDrawnPercentAgreed
 		Temp2 = Temp[Temp[:,:AmountDrawnPercentAgreed].>0, :]
 			x2 	= Array(Temp2[!,s])
 			y 	= Array(Temp2[!,:CumulativeEffect])
 			(b,v) = Regress(y,x2)
 			yhat2 = b[1]ones(size(x2)[1]) + b[2]*x2
+			println("Amount drawn b2 is $b")
 	elseif s ==:structural_conditions
 			Temp2 = Temp[Temp[:, :structural_conditions].<40, :]
 			x2 	= Array(Temp2[!,s])
 			y 	= Array(Temp2[!,:CumulativeEffect])
 			(b,v) = Regress(y,x2)
-			yhat2 = b[1]ones(size(x2)[1]) + b[2]*x2
+			yhat2 = b[1]*ones(size(x2, 1)) + b[2]*x2
+			println("Structural conditions b2 is $b")
 	end
 
 
@@ -51,11 +54,11 @@ function HeterogeneityScatter(s::Symbol)
 	scatter(Temp[!,s], Temp[!,:CumulativeEffect], label="", ylabel="Estimated Cumulative Output Effect \n (% of crisis year GDP)", guidefontsize = 8, grid=false, xlabel=xlab, marker=:x, markercolor=:gray, ylims=(-100,200),  markersize=2)
 	plot!(x, yhat, label="", linecolor=treatedblue, linestyle=:solid, linewidth=[1.7], fontfamily="Times")
 	if s ==:AmountAgreedPercentGDP 
-	plot!(x2, yhat2, label="Without Outlier", linecolor=:gray, linestyle=:solid, linewidth=[1.7], xlims=(0, 15))
+	plot!([minimum(x2); maximum(x2)], [minimum(yhat2); maximum(yhat2)], label="Without Outlier", linecolor=:gray, linestyle=:dash, linewidth=[1.5], xlims=(0, 15.1))
 	elseif s ==:AmountDrawnPercentAgreed
-	plot!(x2, yhat2, label="Without Zeros", linecolor=:gray, linestyle=:solid, linewidth=[1.7])	
+	plot!([minimum(x2); maximum(x2)], [minimum(yhat2); maximum(yhat2)], label="Without Zeros", linecolor=:gray, linestyle=:dash, linewidth=[1.5])	
 	elseif s ==:structural_conditions
-	plot!(x2, yhat2, label="Without Outlier", linecolor=:gray, linestyle=:solid, linewidth=[1.7])
+	plot!([minimum(x2); maximum(x2)], [minimum(yhat2); maximum(yhat2)], label="Without Outlier", linecolor=:gray, linestyle=:dash, linewidth=[1.5])
 	end
 	savefig(joinpath(output_directory, "Heterogeneity_$ss.pdf"))
 	savefig(joinpath(output_directory, "Heterogeneity_$ss.svg"))

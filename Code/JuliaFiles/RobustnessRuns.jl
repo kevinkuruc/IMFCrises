@@ -1,6 +1,6 @@
 using GLM
 include("New_Sample_Each_Horizon.jl")
-RobustnessChecks = ["CAB" "Infl" "Debt" "TightBounds"  "WideBounds" "FreeForAll" "NoAdv" "GoodMatches" "LP" "Iterative" "SomeDrawn" "PWT" "13Bounds" "15Bounds" "20Bounds"]
+RobustnessChecks = ["CAB" "Infl" "Debt" "TightBounds"  "WideBounds" "FreeForAll" "NoAdv" "GoodMatches" "LP" "Iterative" "SomeDrawn" "PWT" "13Bounds" "15Bounds" "LogInfl" "AllThree"]
 Z = zeros(size(predict, 1)+1,length(RobustnessChecks))
 RobustnessChecks = [RobustnessChecks; Z]
 
@@ -35,6 +35,18 @@ Weights[end]	= Growth_variance/Infl_variance
 bounds            = [B, B, B, B, B, B, .5, .5, .5, Inf]
 (Treated_Infl, Synthetics_Infl, Weights_Infl) = GenSynthetics(IMFCrises, NoIMFCrises, matchon, predict, localtol=bounds, matchweights=Weights);
 
+#---Logged Inflation------#
+matchon           = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI, :Banking, :Currency, :Debt, :LogInfl]
+completecheck     = [:Country, :year, :DWDI, :LogInfl]
+tempTreat         = IMFCrises[:, completecheck]
+tempTreat         = tempTreat[completecases(tempTreat),:]
+Treated_wLogInfl  = innerjoin(IMFCrises, tempTreat, on=[:Country, :year], makeunique=true)
+LogInfl_variance  = var(Treated_wLogInfl[!,:LogInfl])
+Weights           = ones(size(matchon))
+Weights[end]      = Growth_variance/LogInfl_variance
+bounds            = [B, B, B, B, B, B, .5, .5, .5, Inf]
+(Treated_LogInfl, Synthetics_LogInfl, Weights_LogInfl) = GenSynthetics(IMFCrises, NoIMFCrises, matchon, predict, localtol=bounds, matchweights=Weights);
+
 #---WITH EXDEBT ----------#
 matchon 		= [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI, :Banking, :Currency, :Debt, :EXDEBT]
 completecheck 	= [:Country, :year, :DWDI, :EXDEBT]
@@ -46,6 +58,16 @@ Weights 		= ones(size(matchon))
 Weights[end]	= Growth_variance/Debt_variance
 bounds            = [B, B, B, B, B, B, .5, .5, .5, Inf]
 (Treated_EXDEBT, Synthetics_EXDEBT, Weights_EXDEBT) = GenSynthetics(IMFCrises, NoIMFCrises, matchon, predict, localtol=bounds, matchweights=Weights);
+
+#---WITH CAB+EXDEBT+INFL---------------#
+matchon           = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI, :Banking, :Currency, :Debt, :CAB, :Infl, :EXDEBT]
+Weights           = ones(size(matchon))
+Weights[end-2]    = Growth_variance/CAB_variance
+Weights[end-1]    = Growth_variance/Infl_variance
+Weights[end]      = Growth_variance/Debt_variance
+bounds            = [B, B, B, B, B, B, .5, .5, .5, Inf, Inf, Inf]
+(Treated_AllThree, Synthetics_AllThree, Weights_AllThree) = GenSynthetics(IMFCrises, NoIMFCrises, matchon, predict, localtol=bounds, matchweights=Weights);
+
 
 #---Different LOCAL RESTRICTIONs ----- #
 matchon = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI, :Banking, :Currency, :Debt]
@@ -67,17 +89,6 @@ matchon = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI, :Bankin
 bounds  = [B+6, B+6, B+6, B+6, B+6, B+6, .5, .5, .5]
 W       = ones(10,1)
 (Treated_WideBounds3, Synthetics_WideBounds3, Weights_WideBounds3) = GenSynthetics(IMFCrises, NoIMFCrises, matchon, predict, localtol=bounds, matchweights=W);
-
-matchon = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI, :Banking, :Currency, :Debt]
-bounds  = [B+8, B+8, B+8, B+8, B+8, B+8, .5, .5, .5]
-W       = ones(10,1)
-(Treated_WideBounds4, Synthetics_WideBounds4, Weights_WideBounds4) = GenSynthetics(IMFCrises, NoIMFCrises, matchon, predict, localtol=bounds, matchweights=W);
-
-#---NO LOCAL BOUNDS ----------------------------#
-#matchon = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI, :Banking, :Currency, :Debt]
-#bounds  = [25, 25, 25, 25, 25, 25, .5, .5, .5]
-#W       = ones(10,1)
-#(Treated_NoBounds, Synthetics_NoBounds, Weights_NoBounds) = GenSynthetics(IMFCrises, NoIMFCrises, matchon, predict, localtol=bounds, matchweights=W);
 
 #----ANY CRISIS TYPE CAN MATCH ---- #
 matchon = [:LGrowth5, :LGrowth4, :LGrowth3, :LGrowth2, :LGrowth1, :DWDI]
@@ -143,7 +154,10 @@ bounds  = [B, B, B, B, B, B, .5, .5, .5]
 W       = ones(10,1)
 (Treated_PWT, Synthetics_PWT, Weights_PWT) = GenSynthetics(IMFCrises_PWT, NoIMFCrises_PWT, matchon, predict, localtol=bounds, matchweights=W);
 
-for z = (Treated_CAB, Synthetics_CAB, Treated_Infl, Synthetics_Infl, Treated_EXDEBT, Synthetics_EXDEBT, Treated_TightBounds, Synthetics_TightBounds, Treated_WideBounds1, Synthetics_WideBounds1, Treated_WideBounds2, Synthetics_WideBounds2, Treated_WideBounds3, Synthetics_WideBounds3,Treated_WideBounds4, Synthetics_WideBounds4, Treated_FreeForAll, Synthetics_FreeForAll, Treated_NoAdv, Synthetics_NoAdv, Treated_GoodMatches, Synthetics_GoodMatches, Treated_SomeDrawn, Synthetics_SomeDrawn, Treated_PWT, Synthetics_PWT)
+for z = (Treated_CAB, Synthetics_CAB, Treated_Infl, Synthetics_Infl, Treated_EXDEBT, Synthetics_EXDEBT, Treated_TightBounds, Synthetics_TightBounds,
+         Treated_WideBounds1, Synthetics_WideBounds1, Treated_WideBounds2, Synthetics_WideBounds2, Treated_WideBounds3, Synthetics_WideBounds3,
+         Treated_WideBounds4, Synthetics_WideBounds4, Treated_FreeForAll, Synthetics_FreeForAll, Treated_NoAdv, Synthetics_NoAdv, Treated_GoodMatches,
+         Synthetics_GoodMatches, Treated_SomeDrawn, Synthetics_SomeDrawn, Treated_PWT, Synthetics_PWT, Treated_LogInfl, Synthetics_LogInfl, Treated_AllThree, Synthetics_AllThree)
       z[!,:PostGrowth1] = map((x1) -> 100*(1+x1/100 -1), z[!,:FGrowth1])
       z[!,:PostGrowth2] = map((x1,x2) -> 100*((1+x1/100)*(1+x2/100) -1), z[!,:FGrowth1], z[!,:FGrowth2])
       z[!,:PostGrowth3] = map((x1,x2,x3) -> 100*((1+x1/100)*(1+x2/100)*(1+x3/100) -1), z[!,:FGrowth1], z[!,:FGrowth2], z[!,:FGrowth3])
@@ -187,8 +201,10 @@ for (h, pg) in enumerate(PostGrowths)
       RobustnessChecks[h+2,13] = mean(TempDiff)
       TempDiff = Array(Treated_WideBounds3[!,pg]-Synthetics_WideBounds3[!,pg])
       RobustnessChecks[h+2,14] = mean(TempDiff)
-      TempDiff = Array(Treated_WideBounds4[!,pg]-Synthetics_WideBounds4[!,pg])
-      RobustnessChecks[h+2,15] = mean(TempDiff)     
+      TempDiff = Array(Treated_LogInfl[!,pg]-Synthetics_LogInfl[!,pg])
+      RobustnessChecks[h+2,15] = mean(TempDiff)
+      TempDiff = Array(Treated_AllThree[!,pg]-Synthetics_AllThree[!,pg])
+      RobustnessChecks[h+2,16] = mean(TempDiff)      
 end
 
 #Define gray colors
@@ -205,7 +221,8 @@ g8 = :gray
 
 t = collect(0:1:6)
 #---GRAPH WITH ALL ROBUSTNESS (Figure 3b) --------#
-plot(t, [0; MainBetas[:,1]], linewidth=2.5, color=treatedblue, grid=false, label="", xlabel="Years From Crisis", ylabel = "Increase in Output (%)", legend=(0.1,0.385), foreground_color_legend=nothing, background_color_legend=nothing, legendfontsize=8, ylims=(-3,4.0), marker=([:circle], [treatedblue], [2.8]))
+plot(t, [0; MainBetas[:,1]], linewidth=2.5, color=treatedblue, grid=false, label="", xlabel="Years From Crisis", ylabel = "Increase in Output (%)",
+     legend=(0.1,0.385), foreground_color_legend=nothing, background_color_legend=nothing, legendfontsize=8, ylims=(-3,4.0), marker=([:circle], [treatedblue], [2.8]), fontfamily="Times")
 plot!(t, RobustnessChecks[2:end, 1], linewidth=1.9, color=g1, style=:dash, label="+CAB", marker=([:hexagon], [g1], [2.5]))
 plot!(t, RobustnessChecks[2:end, 2], linewidth=1.9, color=g15, style=:dashdot, label="+Infl",  marker=([:rect], [g15], [2.5]))
 plot!(t, RobustnessChecks[2:end, 3], linewidth=1.9, color=g2, style=:dot, label="+Debt",  marker=([:xcross], [g2], [2.5]))
@@ -221,8 +238,11 @@ savefig(joinpath(output_directory, "Robustness.pdf"))
 savefig(joinpath(output_directory, "Robustness.svg"))
 
 #--Something weird here--#
-plot(t, [0; MainBetas[:,1]], linewidth=2.5, color=treatedblue, label="", ylabel = "Increase in Output (%)", grid=false, xlabel="Years From Crisis", legend=(0.1,0.3), legendfontsize=7, foreground_color_legend=nothing, ylims=(-2,3.5), marker=([:circle], [treatedblue], [2.5]))
+plot(t, [0; MainBetas[:,1]], linewidth=2.5, color=treatedblue, label="", ylabel = "Increase in Output (%)", grid=false, xlabel="Years From Crisis",
+             legend=(0.1,0.3), legendfontsize=7, foreground_color_legend=nothing, ylims=(-3.4,3.5), marker=([:circle], [treatedblue], [2.5]), fontfamily="Times")
 plot!(t, RobustnessChecks[2:end, 11], linewidth=1.9, color=g8, style=:dash, label="Non-Zero Funds Disbursed", marker=([:star2], [g8], [2.5]))
+plot!(t, RobustnessChecks[2:end, 15], linewidth=1.9, color=g15, style=:dashdot, label="Logged Inflation", marker=([:rect], [g15], [2.5]))
+plot!(t, RobustnessChecks[2:end, 16], linewidth=1.9, color=g45, style=:dot, label="CAB + Debt + Inflation",  marker=([:star2], [g45], [2.5]))
 plot!(t, RobustnessChecks[2:end, 12], linewidth=1.9, color=g2, style=:dashdot, label="PWT", marker=([:hexagon], [g2], [2.5]))
 plot!(t, RobustnessChecks[2:end, 4], linewidth=1.9, color=g3, style=:dot, label="+/-7",  marker=([:rect], [g3], [2.5]))
 plot!(t, RobustnessChecks[2:end, 5], linewidth=1.9, color=g4, style=:dot, label="+/-11",  marker=([:xcross], [g4], [2.5]))
